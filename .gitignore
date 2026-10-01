@@ -1,0 +1,4 @@
+node_modules/
+.codemap/out/
+examples/demo/.codemap/out/
+*.log

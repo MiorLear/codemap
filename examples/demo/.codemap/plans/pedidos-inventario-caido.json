@@ -1,0 +1,25 @@
+{
+  "id": "pedidos-inventario-caido",
+  "titulo": "Pedidos: responder 502 si el inventario no contesta",
+  "estado": "propuesto",
+  "intencion": "Si el servicio de inventario se cae, `fetch` rechaza la promesa y Express 4 no la captura: la petición se queda colgada. Envolver la carga en try/catch y responder 502.",
+  "cambios": [
+    {
+      "funcion": "src/pedidos/routes.ts#GET /pedidos/:id",
+      "accion": "modificar",
+      "resumen": "Capturar el fallo del inventario y responder 502 con un mensaje claro.",
+      "pasos": [
+        { "si": "¿el id no es numérico?", "entonces": [{ "responde": 400, "detalle": "Identificador no válido." }] },
+        {
+          "intentar": [{ "hacer": "Cargar el pedido del inventario", "llama": ["cargarPedido"] }],
+          "siFalla": [{ "hacer": "Registrar el error con el id" }, { "responde": 502, "detalle": "El inventario no responde." }]
+        },
+        { "si": "¿no existe el pedido?", "entonces": [{ "responde": 404, "detalle": "No existe ese pedido." }] },
+        { "hacer": "Calcular total y artículos", "llama": ["resumen"] },
+        { "responde": 200, "detalle": "resumen del pedido" }
+      ]
+    }
+  ],
+  "revision": [],
+  "historial": [{ "estado": "propuesto", "fecha": "2026-10-01T00:00:00.000Z", "por": "Claude" }]
+}

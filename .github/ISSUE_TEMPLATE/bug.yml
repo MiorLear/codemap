@@ -1,0 +1,29 @@
+name: Algo se rompió
+description: Un comando falló o el mapa sale mal
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: comando
+    attributes:
+      label: Comando
+      placeholder: "codemap build --base main"
+    validations:
+      required: true
+  - type: textarea
+    id: salida
+    attributes:
+      label: Qué pasó
+      description: Pega la salida o describe qué se ve mal en el mapa.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Qué esperabas
+  - type: input
+    id: entorno
+    attributes:
+      label: Entorno
+      placeholder: "Windows 11 · Node 22 · Python 3.12"

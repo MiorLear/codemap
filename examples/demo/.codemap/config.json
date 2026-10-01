@@ -1,0 +1,97 @@
+{
+  "base": "HEAD",
+  "exclude": [
+    "node_modules/",
+    "/dist/",
+    "/build/",
+    "/.next/",
+    "/coverage/",
+    "/out/",
+    "/vendor/",
+    "__pycache__/",
+    "/.venv/",
+    "/venv/",
+    ".min.js",
+    ".d.ts",
+    ".test.",
+    ".spec.",
+    "/test_",
+    "/tests/",
+    "/__tests__/"
+  ],
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".py"
+  ],
+  "paths": {},
+  "fileAliases": {},
+  "groups": [
+    {
+      "id": "src/",
+      "prefix": "src/",
+      "name": "API · servidor y datos",
+      "layer": "src",
+      "desc": "Arranque de Express y acceso al inventario."
+    },
+    {
+      "id": "src/middleware/",
+      "prefix": "src/middleware/",
+      "name": "API · seguridad",
+      "layer": "src",
+      "desc": "Clave de API de las rutas /api."
+    },
+    {
+      "id": "src/pedidos/",
+      "prefix": "src/pedidos/",
+      "name": "Pedidos",
+      "layer": "src",
+      "desc": "Rutas y lógica de pedidos."
+    },
+    {
+      "id": "web/",
+      "prefix": "web/",
+      "name": "Panel web",
+      "layer": "web",
+      "desc": "Tarjetas que consumen la API."
+    },
+    {
+      "id": "worker/sync/",
+      "prefix": "worker/sync/",
+      "name": "Worker · sincronización",
+      "layer": "worker",
+      "desc": "Lleva los pedidos al almacén (Python)."
+    }
+  ],
+  "layers": [
+    {
+      "id": "web",
+      "name": "Cliente"
+    },
+    {
+      "id": "src",
+      "name": "API"
+    },
+    {
+      "id": "worker",
+      "name": "Worker (Python)"
+    }
+  ],
+  "rules": {
+    "longFunctionLines": 80,
+    "express4AsyncErrors": true
+  },
+  "python": {
+    "cmd": "python",
+    "roots": [
+      "worker"
+    ]
+  },
+  "name": "Demo · Tienda",
+  "root": "..",
+  "include": [
+    "src/",
+    "web/",
+    "worker/"
+  ]
+}

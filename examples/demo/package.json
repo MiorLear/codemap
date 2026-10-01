@@ -1,0 +1,6 @@
+{
+  "name": "demo-tienda",
+  "private": true,
+  "description": "Proyecto de ejemplo para probar codemap: API de pedidos (Express), una card web y un worker en Python.",
+  "dependencies": { "express": "^4.21.2" }
+}

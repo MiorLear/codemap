@@ -1,0 +1,32 @@
+{
+  "name": "codemap",
+  "version": "0.1.0",
+  "description": "Mapa navegable del código (sistema → archivo → función → flujo) para revisar lo que escribe un agente de IA, con planes \"diagrama primero\" verificados contra el código real.",
+  "type": "module",
+  "bin": {
+    "codemap": "bin/codemap.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "templates/"
+  ],
+  "scripts": {
+    "test": "node test/run.mjs",
+    "demo": "node bin/codemap.mjs build --project examples/demo && node bin/codemap.mjs serve --project examples/demo --open"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "typescript": "^5.7.3"
+  },
+  "keywords": [
+    "claude-code",
+    "code-review",
+    "ai-agents",
+    "architecture",
+    "flowchart",
+    "static-analysis"
+  ]
+}

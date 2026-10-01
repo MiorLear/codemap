@@ -1,0 +1,1423 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Codemap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/elkjs@0.9.3/lib/elk.bundled.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-elk@2.2.0/dist/cytoscape-elk.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-node-html-label@1.2.2/dist/cytoscape-node-html-label.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f6f3; --surface: #ffffff; --sunken: #efeee9; --text: #1d1d1b; --muted: #6b6a64;
+    --border: #dcdbd4; --accent: #2f6fdb; --accent-soft: #e6eefc; --change: #d9730d; --change-soft: #fdf0e3;
+    --warn: #a86a12; --warn-soft: #fbf3e2; --danger: #c53030; --ok: #2f855a; --code: #fafaf8;
+    --l-ext: #f2f2ef; --l-1: #e8f0fe; --l-2: #e7f5ec; --l-3: #fdf3e1; --l-4: #f1e9fb; --l-5: #e3f4f6; --l-6: #fbe9ec; --l-0: #ffffff; --k-if: #a16207; --k-try: #5b4fd1; --k-err: #c2410c; --k-call: #1d5fd1; --k-res: #15803d; --k-ret: #475569; --k-loop: #0e7490; --k-step: #6b7280; --gridline: rgba(30,40,60,.055); --card: #ffffff; --card-border: #d6d8dd;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141413; --surface: #1d1d1b; --sunken: #191918; --text: #ecebe5; --muted: #9b9a92;
+      --border: #3a3935; --accent: #7aa7ff; --accent-soft: #1f2a40; --change: #f0a04b; --change-soft: #3a2a17;
+      --warn: #e0b060; --warn-soft: #33291a; --danger: #f07070; --ok: #6cc592; --code: #181817;
+      --l-ext: #262624; --l-1: #1e2a3f; --l-2: #1c3024; --l-3: #33291a; --l-4: #2a2238; --l-5: #173035; --l-6: #3a1f26; --l-0: #232321; --k-if: #f2b544; --k-try: #a59bff; --k-err: #ff8a65; --k-call: #79a8ff; --k-res: #4ade80; --k-ret: #94a3b8; --k-loop: #4fd1e3; --k-step: #9ca3af; --gridline: rgba(255,255,255,.045); --card: #18191c; --card-border: #34363c;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141413; --surface: #1d1d1b; --sunken: #191918; --text: #ecebe5; --muted: #9b9a92;
+    --border: #3a3935; --accent: #7aa7ff; --accent-soft: #1f2a40; --change: #f0a04b; --change-soft: #3a2a17;
+    --warn: #e0b060; --warn-soft: #33291a; --danger: #f07070; --ok: #6cc592; --code: #181817;
+    --l-ext: #262624; --l-1: #1e2a3f; --l-2: #1c3024; --l-3: #33291a; --l-4: #2a2238; --l-5: #173035; --l-6: #3a1f26; --l-0: #232321; --k-if: #f2b544; --k-try: #a59bff; --k-err: #ff8a65; --k-call: #79a8ff; --k-res: #4ade80; --k-ret: #94a3b8; --k-loop: #4fd1e3; --k-step: #9ca3af; --gridline: rgba(255,255,255,.045); --card: #18191c; --card-border: #34363c;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+  button, input, textarea { font: inherit; color: inherit; }
+  a { color: var(--accent); }
+  code, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12.5px; }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 650; white-space: nowrap; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--sunken); color: var(--muted); white-space: nowrap; }
+  .chip.change { background: var(--change-soft); color: var(--change); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .spacer { flex: 1; }
+  .search { position: relative; }
+  .search input { width: 260px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+  .results { position: absolute; top: 36px; right: 0; width: 420px; max-height: 60vh; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.18); z-index: 20; display: none; }
+  .results.open { display: block; }
+  .results button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 12px; cursor: pointer; }
+  .results button:hover, .results button.active { background: var(--accent-soft); }
+  .results small { color: var(--muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 5px 10px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.on { background: var(--change-soft); border-color: var(--change); color: var(--change); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  main { display: grid; grid-template-columns: 240px 1fr 380px; min-height: 0; }
+  nav { border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tabs button { flex: 1; border: 0; background: none; padding: 9px 4px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; font-size: 13px; }
+  .tabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+  .navbody { overflow: auto; padding: 8px 0; flex: 1; }
+  .navgroup { padding: 10px 14px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .item { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; text-align: left; padding: 4px 14px; cursor: pointer; font-size: 13px; }
+  .item:hover { background: var(--sunken); }
+  .item.current { background: var(--accent-soft); }
+  .item .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item.l2 { padding-left: 30px; }
+  .item.l3 { padding-left: 46px; font-size: 12.5px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--change); flex: none; }
+  .wn { color: var(--warn); font-size: 11px; flex: none; }
+  .method { font: 600 10.5px/1 ui-monospace, Consolas, monospace; padding: 3px 5px; border-radius: 4px; flex: none; color: #fff; }
+  .m-GET { background: #2f855a; } .m-POST { background: #2f6fdb; } .m-PUT, .m-PATCH { background: #a86a12; } .m-DELETE { background: #c53030; } .m-ALL { background: #666; } .m-CLI { background: #3d7f8c; }
+
+  .center { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .crumbs { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; font-size: 13px; }
+  .crumbs button { border: 0; background: none; padding: 2px 4px; cursor: pointer; color: var(--accent); border-radius: 4px; }
+  .crumbs button:hover { background: var(--accent-soft); }
+  .crumbs .sep { color: var(--muted); }
+  .crumbs .here { font-weight: 600; }
+  .tools { margin-left: auto; display: flex; gap: 6px; }
+  #stage { position: relative; flex: 1; overflow: hidden; cursor: grab; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 22px 22px; }
+  #canvas { position: absolute; inset: 0; }
+  .hint { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; pointer-events: none; }
+  .empty { padding: 40px; color: var(--muted); }
+  /* ── Tarjetas del diagrama de flujo (plan y función) ── */
+  #stage.grid { background-image: linear-gradient(var(--gridline) 1px, transparent 1px), linear-gradient(90deg, var(--gridline) 1px, transparent 1px); background-size: 24px 24px; }
+  #canvas.laying .cm-card, #canvas.laying .cm-pill { visibility: hidden; }
+  .cm-card { position: relative; box-sizing: border-box; padding: 8px 12px 9px 16px; pointer-events: none; color: var(--text); font: 13px/18px "IBM Plex Sans", system-ui, sans-serif; text-align: left; }
+  .cm-card::before { content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 3px; border-radius: 5px 0 0 5px; background: var(--tone); }
+  .cm-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 18px; }
+  .cm-tag { font: 700 10.5px/16px "JetBrains Mono", ui-monospace, monospace; letter-spacing: .06em; color: var(--tone); background: color-mix(in srgb, var(--tone) 13%, transparent); padding: 0 6px; border-radius: 3px; white-space: nowrap; }
+  .cm-meta { font: 400 10.5px/16px "JetBrains Mono", ui-monospace, monospace; color: var(--muted); white-space: nowrap; }
+  .cm-st { font: 700 10px/16px "JetBrains Mono", ui-monospace, monospace; letter-spacing: .06em; padding: 0 6px; border-radius: 3px; }
+  .cm-st.ok { color: var(--k-res); background: color-mix(in srgb, var(--k-res) 14%, transparent); }
+  .cm-st.falta { color: var(--k-err); background: color-mix(in srgb, var(--k-err) 14%, transparent); }
+  .cm-body { margin-top: 4px; white-space: pre; }
+  .cm-body.mono { font: 12px/17px "JetBrains Mono", ui-monospace, monospace; }
+  .cm-calls { margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--card-border); font: 11.5px/16px "JetBrains Mono", ui-monospace, monospace; color: var(--k-call); white-space: pre; }
+  .cm-why { margin-top: 5px; font: 11px/15px "JetBrains Mono", ui-monospace, monospace; color: var(--k-err); white-space: pre; }
+  .cm-pill { pointer-events: none; display: grid; place-items: center; box-sizing: border-box; font: 700 10.5px/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .1em; color: var(--tone); }
+  .chip.plan { background: var(--accent-soft); color: var(--accent); text-decoration: none; }
+  .estado { font-size: 10.5px; font-weight: 600; padding: 2px 6px; border-radius: 4px; flex: none; text-transform: uppercase; letter-spacing: .03em; }
+  .e-propuesto { background: var(--accent-soft); color: var(--accent); }
+  .e-cambios { background: var(--warn-soft); color: var(--warn); }
+  .e-aprobado, .e-implementado { background: var(--l-2); color: var(--ok); }
+  .e-invalido { background: var(--warn-soft); color: var(--danger); }
+  .check { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .check b { flex: none; width: 14px; }
+  .check.ok b { color: var(--ok); } .check.falta b { color: var(--danger); } .check.extra b { color: var(--warn); }
+  .check small { color: var(--muted); display: block; }
+  .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; pointer-events: none; }
+  .loading[hidden] { display: none; }
+
+  aside { border-left: 1px solid var(--border); background: var(--surface); overflow: auto; min-height: 0; }
+  .panel { padding: 16px; }
+  .panel h2 { font-size: 16px; margin: 0 0 4px; word-break: break-word; }
+  .panel h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; }
+  .panel p { margin: 6px 0; }
+  .sub { color: var(--muted); font-size: 12.5px; word-break: break-all; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .badge { font-size: 11.5px; padding: 2px 7px; border-radius: 5px; background: var(--sunken); color: var(--muted); }
+  .badge.change { background: var(--change-soft); color: var(--change); }
+  .badge.ia { background: var(--accent-soft); color: var(--accent); }
+  .warnbox { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 8px 10px; border-radius: 6px; margin: 6px 0; font-size: 13px; }
+  .warnbox b { color: var(--warn); }
+  .doc { white-space: pre-wrap; font-size: 13px; color: var(--text); background: var(--sunken); border-radius: 8px; padding: 10px; max-height: 260px; overflow: auto; }
+  .links { display: flex; flex-direction: column; gap: 2px; }
+  .links button { text-align: left; border: 0; background: none; padding: 3px 6px; border-radius: 5px; cursor: pointer; color: var(--accent); font-size: 13px; }
+  .links button:hover { background: var(--accent-soft); }
+  .links small { color: var(--muted); }
+  .pills { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .pill { font: 11.5px ui-monospace, Consolas, monospace; background: var(--sunken); padding: 2px 6px; border-radius: 4px; }
+  .arrow { color: var(--muted); font-size: 11px; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  pre.code { background: var(--code); border: 1px solid var(--border); border-radius: 8px; overflow: auto; max-height: 420px; margin: 0; padding: 8px 0; font-size: 12px; line-height: 1.5; }
+  pre.code span.ln { display: block; padding: 0 10px 0 0; white-space: pre; }
+  pre.code span.ln::before { content: attr(data-n); display: inline-block; width: 42px; padding-right: 10px; text-align: right; color: var(--muted); opacity: .7; }
+  pre.code span.ln.hl { background: var(--accent-soft); }
+  textarea { width: 100%; min-height: 64px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--bg); resize: vertical; }
+  .comment { border-left: 3px solid var(--accent); padding: 4px 8px; margin: 6px 0; background: var(--sunken); border-radius: 0 6px 6px 0; font-size: 13px; }
+  .comment small { color: var(--muted); display: block; }
+  .legend { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 12.5px; align-items: center; }
+  .sw { width: 22px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px; }
+  dialog { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); width: min(720px, 92vw); padding: 0; }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  dialog .panel { max-height: 75vh; overflow: auto; }
+  dialog pre { white-space: pre-wrap; background: var(--sunken); padding: 12px; border-radius: 8px; font-size: 12.5px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 1100px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 45vh auto auto; overflow: auto; }
+    body { overflow: auto; }
+    nav { border-right: 0; border-bottom: 1px solid var(--border); max-height: 260px; order: 2; }
+    .center { order: 1; min-height: 45vh; }
+    aside { order: 3; border-left: 0; }
+    .search input { width: 100%; }
+    .search { flex: 1 1 100%; }
+    .results { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Codemap</h1>
+  <div class="chips" id="stats"></div>
+  <div class="spacer"></div>
+  <button class="btn" id="onlyChanges" title="Atenúa todo lo que no cambió">Solo cambios</button>
+  <button class="btn" id="reviewBtn">Revisión (0)</button>
+  <div class="search">
+    <input id="q" placeholder="Buscar función, archivo o ruta…  ( / )" autocomplete="off" />
+    <div class="results" id="results"></div>
+  </div>
+</header>
+<main>
+  <nav>
+    <div class="tabs" id="tabs">
+      <button data-tab="mapa" class="active">Mapa</button>
+      <button data-tab="entradas">Entradas</button>
+      <button data-tab="cambios">Cambios</button>
+      <button data-tab="avisos">Avisos</button>
+      <button data-tab="planes">Planes</button>
+    </div>
+    <div class="navbody" id="navbody"></div>
+  </nav>
+  <section class="center">
+    <div class="crumbs" id="crumbs"></div>
+    <div id="stage"><div id="canvas"></div><div class="loading" id="loading" hidden></div><div class="hint" id="hint"></div></div>
+  </section>
+  <aside><div class="panel" id="panel"></div></aside>
+</main>
+<dialog id="review"><div class="panel" id="reviewBody"></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const G = /*__CODEMAP_DATA__*/null;
+
+/* ───────── utilidades ───────── */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const cut = (s, n) => { s = String(s ?? ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fileOf = (id) => G.files[id];
+const fnOf = (id) => G.fns[id];
+const shortFn = (f) => (f.kind === "entry" ? `▶ ${f.file.split("/").pop()}` : f.name);
+const vscode = (file, line) => `vscode://file/${G.meta.root}/${file}${line ? ":" + line : ""}`;
+// Capas del sistema: vienen de la config del proyecto ("layers": [{ id, name }]); el color va por posición
+const LAYERS = [...(G.meta.layers ?? []).map((l) => [l.id, l.name ?? l.id]), ["", "Otros"]];
+const layerVar = (id) => { const i = LAYERS.findIndex((l) => l[0] === id); return i < 0 || !id ? "--l-0" : `--l-${(i % 6) + 1}`; };
+const layerFill = (id) => css(layerVar(id));
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 1800); }
+function copy(text, msg) { navigator.clipboard?.writeText(text).then(() => toast(msg), () => toast("No se pudo copiar")); }
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem("codemap:" + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("codemap:" + k, JSON.stringify(v)); } catch {} },
+};
+
+/* índices derivados */
+const groupChanges = {}, fileWarn = {};
+for (const f of Object.values(G.files)) {
+  fileWarn[f.id] = f.warnings.length + f.fns.reduce((n, id) => n + G.fns[id].warnings.length, 0);
+  if (f.change) groupChanges[f.group] = (groupChanges[f.group] ?? 0) + 1;
+}
+const groupWarn = (g) => G.groups[g].files.reduce((n, f) => n + fileWarn[f], 0);
+const groupsSorted = Object.values(G.groups).filter((g) => g.files.length)
+  .sort((a, b) => LAYERS.findIndex((l) => l[0] === a.layer) - LAYERS.findIndex((l) => l[0] === b.layer));
+
+/* ───────── estado y navegación ───────── */
+let state = { view: "system", id: null };
+let onlyChanges = store.get("onlyChanges", false);
+let selectedFlowNode = null;
+let traceDepth = store.get("traceDepth", 0); // 0 = automatica
+let current = { actions: {}, meta: {} };
+
+function go(view, id) { location.hash = "#/" + view + (id ? "/" + encodeURIComponent(id) : ""); }
+function parseHash() {
+  const m = /^#\/(\w+)(?:\/(.*))?$/.exec(location.hash);
+  if (!m) return { view: "system", id: null };
+  return { view: m[1], id: m[2] ? decodeURIComponent(m[2]) : null };
+}
+window.addEventListener("hashchange", () => { state = parseHash(); selectedFlowNode = null; selectedPlanStep = null; render(); });
+
+/* ───────── diagramas (Cytoscape + ELK) ─────────
+   Las vistas describen nodos, grupos y aristas; aqui se convierten en un grafo interactivo:
+   cada bloque se arrastra, las flechas se redibujan en vivo y los conectados lo siguen. */
+const FONT_FAMILY = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+const measure = document.createElement("canvas").getContext("2d");
+function wrapLabel(label, max = 230) {
+  measure.font = "13px " + FONT_FAMILY;
+  const lines = [];
+  for (const line of String(label ?? "").split("\n")) {
+    let cur = "";
+    for (const word of line.split(" ")) {
+      const t = cur ? cur + " " + word : word;
+      if (cur && measure.measureText(t).width > max) { lines.push(cur); cur = word; } else cur = t;
+    }
+    lines.push(cur);
+  }
+  return { text: lines.join("\n"), w: Math.max(...lines.map((l) => measure.measureText(l).width)), h: lines.length * 17 };
+}
+const SHAPES = {
+  rect: ["round-rectangle", 26, 18], round: ["round-rectangle", 30, 20], stadium: ["round-rectangle", 34, 16],
+  diamond: ["diamond", 0, 0], hex: ["hexagon", 50, 20], para: ["rhomboid", 50, 18], sub: ["cut-rectangle", 30, 18],
+  cyl: ["barrel", 30, 26], circle: ["ellipse", 30, 30],
+};
+class Diagram {
+  constructor(dir = "LR") { this.dir = dir; this.keys = new Map(); this.nodes = []; this.edges = []; this.actions = {}; this.meta = {}; this.n = 0; this.parent = null; }
+  id(key) { if (!this.keys.has(key)) this.keys.set(key, "n" + this.n++); return this.keys.get(key); }
+  node(key, label, { shape = "rect", style = nodeStyle(), onClick, meta } = {}) {
+    const id = this.id(key);
+    if (this.nodes.some((n) => n.data.id === id)) return id;
+    const [cyShape, padW, padH] = SHAPES[shape];
+    const t = wrapLabel(label);
+    let w = t.w + padW, h = t.h + padH;
+    if (shape === "diamond") { w = t.w * 1.5 + 34; h = t.h * 1.9 + 34; }
+    const radius = shape === "stadium" ? h / 2 : shape === "round" ? 14 : 6;
+    this.nodes.push({ data: { id, key, label: t.text, w, h, shape: cyShape, radius, ...style, parent: this.parent ?? undefined } });
+    if (onClick) this.actions[id] = onClick;
+    if (meta) this.meta[id] = meta;
+    return id;
+  }
+  edge(a, b, { label, dashed, thick } = {}) {
+    this.edges.push({ data: { id: `e${this.edges.length}`, source: a, target: b, label: label ?? "", dashed: !!dashed, thick: !!thick } });
+  }
+  sub(key, title, fn, style = clusterStyle()) {
+    const id = this.id("sub:" + key);
+    // parent: los grupos pueden anidarse (grupo > archivo > funciones en la vista completa)
+    this.nodes.push({ data: { id, key: "sub:" + key, label: title, ...style, group: true, parent: this.parent ?? undefined, outer: !this.parent && this.nested } });
+    const prev = this.parent;
+    this.parent = id;
+    fn();
+    this.parent = prev;
+  }
+  elements() {
+    const ids = new Set(this.nodes.map((n) => n.data.id));
+    // un grupo vacio o una arista hacia un nodo que no se dibujo romperian el grafo
+    const used = new Set(this.nodes.filter((n) => n.data.parent).map((n) => n.data.parent));
+    return [
+      ...this.nodes.filter((n) => !n.data.group || used.has(n.data.id)),
+      ...this.edges.filter((e) => ids.has(e.data.source) && ids.has(e.data.target)),
+    ];
+  }
+}
+
+/* ───────── Tarjetas de flujo ─────────
+   El flujo de una función y el de un plan no usan figuras (rombo, paralelogramo...): cada paso
+   es una tarjeta con su tipo en una etiqueta (IF, CALL, RES 502...), el texto, las funciones a
+   las que llama y, en el plan, si el código lo cumple. Cytoscape dibuja el fondo y el borde
+   (para que arrastrar, seleccionar y encajar sigan igual) y encima va el contenido en HTML. */
+const CARD = { max: 248, min: 168, padX: 28, padY: 17, head: 18 };
+function wrapWith(text, font, max) {
+  measure.font = font;
+  const lines = [];
+  for (const line of String(text ?? "").split("\n")) {
+    let cur = "";
+    for (const word of line.split(" ")) {
+      const t = cur ? cur + " " + word : word;
+      if (cur && measure.measureText(t).width > max) { lines.push(cur); cur = word; } else cur = t;
+    }
+    lines.push(cur);
+  }
+  return { lines, w: Math.max(0, ...lines.map((l) => measure.measureText(l).width)) };
+}
+const MONO = (px, w = 400) => `${w} ${px}px "JetBrains Mono", ui-monospace, monospace`;
+const SANS = (px, w = 400) => `${w} ${px}px "IBM Plex Sans", system-ui, sans-serif`;
+
+/** card: { tag, tone, body, mono, calls[], meta, status, why, pill } → tamaño y datos del nodo */
+function cardData(card) {
+  if (card.pill) {
+    measure.font = MONO(10.5, 700);
+    return { w: measure.measureText(card.tag).width * 1.15 + 34, h: 28 };
+  }
+  measure.font = MONO(10.5, 700);
+  const headW = measure.measureText(card.tag).width * 1.06 + 12 + (card.status ? 64 : card.meta ? 48 : 0);
+  const body = card.body ? wrapWith(card.body, card.mono ? MONO(12) : SANS(13), CARD.max) : { lines: [], w: 0 };
+  const calls = wrapWith((card.calls ?? []).map((c) => `→ ${c}()`).join("\n"), MONO(11.5), CARD.max);
+  const why = card.why ? wrapWith(card.why, MONO(11), CARD.max) : { lines: [], w: 0 };
+  const w = Math.min(CARD.max, Math.max(CARD.min, headW, body.w, card.calls?.length ? calls.w : 0, why.w)) + CARD.padX;
+  const h = CARD.padY + CARD.head
+    + (body.lines.length ? 4 + body.lines.length * (card.mono ? 17 : 18) : 0)
+    + (card.calls?.length ? 11 + calls.lines.length * 16 : 0)
+    + (why.lines.length ? 5 + why.lines.length * 15 : 0);
+  return { w, h, body: body.lines.join("\n"), calls: card.calls?.length ? calls.lines.join("\n") : "", why: why.lines.join("\n") };
+}
+
+function cardHtml(d) {
+  if (d.pill) return `<div class="cm-pill" style="--tone:var(${d.tone});width:${d.w}px;height:${d.h}px">${esc(d.tag)}</div>`;
+  const right = d.status ? `<span class="cm-st ${d.status}">${d.status === "ok" ? "OK" : "FALTA"}</span>` : d.meta ? `<span class="cm-meta">${esc(d.meta)}</span>` : "";
+  return `<div class="cm-card" style="--tone:var(${d.tone});width:${d.w}px;height:${d.h}px">
+    <div class="cm-head"><span class="cm-tag">${esc(d.tag)}</span>${right}</div>
+    ${d.body ? `<div class="cm-body${d.mono ? " mono" : ""}">${esc(d.body)}</div>` : ""}
+    ${d.calls ? `<div class="cm-calls">${esc(d.calls)}</div>` : ""}
+    ${d.why ? `<div class="cm-why">${esc(d.why)}</div>` : ""}
+  </div>`;
+}
+
+Diagram.prototype.card = function (key, card, { onClick, meta } = {}) {
+  const id = this.id(key);
+  if (this.nodes.some((n) => n.data.id === id)) return id;
+  const size = cardData(card);
+  // Solo lo que falta lleva borde de color: si todo lo "ok" fuera verde, lo rojo no destacaría
+  const stroke = card.status === "falta" ? css("--k-err") : css("--card-border");
+  this.nodes.push({ data: {
+    id, key, label: "", card: true, ...card, ...size,
+    shape: "round-rectangle", radius: card.pill ? size.h / 2 : 6,
+    fill: css("--card"), color: css("--text"), stroke, bw: card.status === "falta" ? 1.5 : 1, bstyle: card.status === "falta" ? "dashed" : "solid",
+    parent: this.parent ?? undefined,
+  } });
+  if (onClick) this.actions[id] = onClick;
+  if (meta) this.meta[id] = meta;
+  return id;
+};
+
+const RES_TONE = (code) => (String(code).startsWith("5") ? "--k-err" : String(code).startsWith("4") ? "--k-if" : "--k-res");
+const fnName = (id) => { const f = G.fns[id]; return f ? (f.kind === "route" ? `${f.route.method} ${f.route.path}` : f.name) : id; };
+
+/** Un paso del flujo extraído del código → tarjeta (el texto es código: monoespaciado). */
+function cardFromCode(n) {
+  const calls = (n.calls ?? []).map(fnName);
+  const meta = n.line ? `L${n.line}` : null;
+  const label = n.label.replace(/\s+↗$/, "");
+  switch (n.kind) {
+    case "start": return { tag: "START", tone: "--accent", body: label.replace(/^entrada: /, "").replace(/^inicio$/, ""), mono: true, meta };
+    case "end": return { tag: "END", tone: "--k-ret", pill: true };
+    case "decision": return { tag: "IF", tone: "--k-if", body: label.replace(/^¿/, "").replace(/\?$/, ""), mono: true, calls, meta };
+    case "respond": {
+      const m = /^responde (\d+)(?: · (.*))?$/.exec(label) ?? [];
+      return { tag: `RES ${m[1] ?? ""}`.trim(), tone: RES_TONE(m[1]), body: m[2] ?? "", mono: true, calls, meta };
+    }
+    case "return": return { tag: "RETURN", tone: "--k-ret", body: label.replace(/^devuelve /, "").replace(/^return$/, ""), mono: true, calls, meta };
+    case "throw": return { tag: "THROW", tone: "--k-err", body: label.replace(/^lanza /, ""), mono: true, calls, meta };
+    case "try": return { tag: "TRY", tone: "--k-try", meta };
+    case "catch": return { tag: "CATCH", tone: "--k-err", body: label.replace(/^catch\s*/, "").replace(/^except\s*/, ""), mono: true, meta };
+    case "loop": return { tag: "LOOP", tone: "--k-loop", body: label.replace(/^para cada /, "").replace(/^mientras /, "while "), mono: true, calls, meta };
+    default: return { tag: calls.length ? "CALL" : "STEP", tone: calls.length ? "--k-call" : "--k-step", body: label, mono: true, calls, meta };
+  }
+}
+
+/** Un paso del plan → tarjeta (el texto es prosa: proporcional) con su estado frente al código. */
+function cardFromPlan(n) {
+  const calls = n.llama ?? [];
+  const base = { status: n.check ?? null, why: n.check === "falta" ? n.porque : null };
+  switch (n.kind) {
+    case "start": return { tag: "START", tone: "--accent", pill: true };
+    case "end": return { tag: "END", tone: "--k-ret", pill: true };
+    case "decision": return { ...base, tag: "IF", tone: "--k-if", body: n.label };
+    case "respond": {
+      const m = /^responde (\d+)(?: · (.*))?$/.exec(n.label) ?? [];
+      return { ...base, tag: `RES ${m[1] ?? ""}`.trim(), tone: RES_TONE(m[1]), body: m[2] ?? "" };
+    }
+    case "return": return { ...base, tag: "RETURN", tone: "--k-ret", body: n.label.replace(/^devuelve /, "") };
+    case "throw": return { ...base, tag: "THROW", tone: "--k-err", body: n.label.replace(/^lanza /, "") };
+    case "try": return { ...base, tag: "TRY", tone: "--k-try" };
+    case "catch": return { ...base, tag: "CATCH", tone: "--k-err", body: "si falla" };
+    case "loop": return { ...base, tag: "LOOP", tone: "--k-loop", body: n.label.replace(/^para /, "") };
+    default: return { ...base, tag: calls.length ? "CALL" : "STEP", tone: calls.length ? "--k-call" : "--k-step", body: n.label, calls };
+  }
+}
+
+function nodeStyle({ fill, stroke, change, dashed, width } = {}) {
+  return {
+    fill: fill ?? css("--surface"), color: css("--text"),
+    stroke: change ? css("--change") : stroke ?? css("--border"),
+    bw: change ? 3 : width ?? 1.5, bstyle: dashed ? "dashed" : "solid",
+  };
+}
+const clusterStyle = () => ({ fill: css("--sunken"), stroke: css("--border"), color: css("--muted"), bw: 1, bstyle: "solid" });
+
+function cyStyle(taxi) {
+  return [
+    { selector: "node", style: {
+      label: "data(label)", "text-wrap": "wrap", "text-max-width": 2000, "font-family": FONT_FAMILY, "font-size": 13, "line-height": 1.3,
+      "text-valign": "center", "text-halign": "center", color: "data(color)", "background-color": "data(fill)",
+      "border-color": "data(stroke)", "border-width": "data(bw)", "border-style": "data(bstyle)",
+    } },
+    { selector: "node[w]", style: { shape: "data(shape)", width: "data(w)", height: "data(h)", "corner-radius": "data(radius)" } },
+    { selector: ":parent", style: {
+      shape: "round-rectangle", "corner-radius": 10, padding: 16, "text-valign": "top", "text-halign": "center",
+      "text-margin-y": -6, "font-size": 12, "font-weight": 600,
+    } },
+    // En la vista completa los grupos de primer nivel son el mapa de carreteras: con 500
+    // funciones solo se lee su nombre desde lejos, asi que va grande
+    { selector: ":parent[?outer]", style: { "font-size": 64, "font-weight": 700, "text-margin-y": -14, padding: 40, "border-width": 2 } },
+    { selector: "edge", style: {
+      width: 1.6, "line-color": css("--muted"), "target-arrow-color": css("--muted"), "target-arrow-shape": "triangle", "arrow-scale": 0.9,
+      "curve-style": taxi ? "taxi" : "bezier", "taxi-direction": taxi ?? "auto", "taxi-turn": 24, "control-point-step-size": 30,
+      label: "data(label)", "font-size": 11, color: css("--muted"),
+      "text-background-color": css("--bg"), "text-background-opacity": 1, "text-background-padding": 3, "text-background-shape": "round-rectangle",
+    } },
+    { selector: "edge[?dashed]", style: { "line-style": "dashed", "line-dash-pattern": [6, 4] } },
+    { selector: "edge[?thick]", style: { width: 3.5, "line-color": css("--accent"), "target-arrow-color": css("--accent"), color: css("--accent") } },
+    { selector: ".faded", style: { opacity: 0.25 } },
+    { selector: ".sel", style: { "border-color": css("--accent"), "border-width": 4 } },
+    { selector: ".follow", style: { "border-color": css("--accent") } },
+    // ── Diagrama de flujo con tarjetas ──
+    { selector: "node[?card]", style: { "border-style": "data(bstyle)" } },
+    { selector: "node[?card].sel", style: { "border-color": css("--accent"), "border-width": 2.5, "border-style": "solid" } },
+    { selector: ":parent[?mono]", style: {
+      "font-family": MONO(11).split(" ").slice(2).join(" "), "font-size": 11.5, "font-weight": 700,
+      color: css("--muted"), padding: 22, "corner-radius": 8, "text-margin-y": -8, "background-opacity": 0.7,
+    } },
+    ...(taxi ? [
+      { selector: "edge", style: {
+        width: 1.3, "line-color": css("--muted"), "target-arrow-color": css("--muted"), "target-arrow-shape": "triangle", "arrow-scale": 0.75,
+        "taxi-turn": 20, "taxi-turn-min-distance": 8, "line-opacity": 0.85,
+        "font-family": MONO(10).split(" ").slice(2).join(" "), "font-size": 9.5, "font-weight": 700, "text-transform": "uppercase", color: css("--muted"),
+        "text-background-color": css("--card"), "text-background-opacity": 1, "text-background-padding": 3, "text-background-shape": "round-rectangle",
+        "text-border-width": 1, "text-border-color": css("--card-border"), "text-border-opacity": 1,
+      } },
+      { selector: 'edge[label = "error"]', style: { "line-color": css("--k-err"), "target-arrow-color": css("--k-err"), color: css("--k-err") } },
+      { selector: 'edge[label = "sí"]', style: { color: css("--k-res") } },
+      { selector: 'edge[label = "no"]', style: { color: css("--k-err") } },
+    ] : []),
+  ];
+}
+
+let cy = null, renderSeq = 0, lastFit = "all";
+let followDepth = store.get("followDepth", 1); // cuantos saltos de conectados siguen al bloque arrastrado
+function viewKey() {
+  const h = location.hash || "#/system";
+  // El flujo de una funcion cambia de forma si cambia su codigo: sus posiciones van atadas al hash
+  return state.view === "fn" && G.fns[state.id] ? h + "@" + G.fns[state.id].hash : h;
+}
+
+function clearCanvas(html = "") {
+  if (cy) { cy.destroy(); cy = null; }
+  $("#canvas").classList.remove("laying");
+  $("#loading").hidden = true;
+  $("#canvas").innerHTML = html;
+}
+
+async function draw(diagram, { fit = "all", faded = [] } = {}) {
+  const seq = ++renderSeq;
+  clearCanvas();
+  current = diagram;
+  lastFit = fit;
+  const dirs = diagram.dir === "TD" || diagram.dir === "TB" ? ["DOWN"] : fit === "auto" ? ["DOWN", "RIGHT"] : ["RIGHT"];
+  const graph = cytoscape({
+    container: $("#canvas"), elements: diagram.elements(), style: cyStyle(fit === "top" ? "downward" : null),
+    wheelSensitivity: 0.3, minZoom: 0.05, maxZoom: 3, boxSelectionEnabled: false,
+  });
+  cy = graph;
+  graph.nodes().style("visibility", "hidden");
+  if (graph.nodes("[?card]").length) {
+    $("#canvas").classList.add("laying");
+    graph.nodeHtmlLabel([{ query: "node[?card]", halign: "center", valign: "center", halignBox: "center", valignBox: "center", tpl: cardHtml }]);
+  }
+  const leafCount = graph.nodes().filter((n) => !n.isParent()).length;
+  if (leafCount > 120) {
+    $("#loading").textContent = `Acomodando ${leafCount} bloques… la primera vez tarda unos segundos; lo que muevas después se guarda.`;
+    $("#loading").hidden = false;
+    await new Promise((r) => setTimeout(r, 30)); // deja pintar el aviso antes de bloquear con el layout
+  }
+  for (const id of faded) graph.getElementById(id).addClass("faded");
+
+  const leaves = graph.nodes().filter((n) => !n.isParent());
+  const saved = store.get("pos:" + viewKey(), null);
+  const allSaved = saved && leaves.every((n) => saved[n.data("key")]);
+  if (!allSaved) {
+    // Con fit "auto" se prueban las dos direcciones y se queda la que se lee mas grande
+    let best = null;
+    for (const dir of dirs) {
+      await runLayout(graph, dir);
+      if (seq !== renderSeq) return;
+      const bb = graph.elements().boundingBox();
+      const k = scaleFor(bb.w, bb.h);
+      if (!best || k > best.k * 1.05) best = { k, pos: Object.fromEntries(leaves.map((n) => [n.id(), { ...n.position() }])) };
+    }
+    leaves.forEach((n) => n.position(best.pos[n.id()]));
+  }
+  if (saved) leaves.forEach((n) => saved[n.data("key")] && n.position(saved[n.data("key")]));
+  graph.nodes().style("visibility", "visible");
+  $("#canvas").classList.remove("laying");
+  $("#loading").hidden = true;
+  viewTouched = false;
+  fitView(fit);
+  wireGraph(graph);
+}
+
+function runLayout(graph, dir) {
+  return new Promise((resolve) => {
+    const lay = graph.layout({
+      name: "elk", fit: false, animate: false, nodeDimensionsIncludeLabels: false,
+      elk: {
+        algorithm: "layered", "elk.direction": dir, "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.spacing.nodeNodeBetweenLayers": 46, "elk.spacing.nodeNode": 22, "elk.spacing.componentComponent": 40,
+        "elk.padding": "[top=34,left=16,bottom=16,right=16]", "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+      },
+    });
+    lay.one("layoutstop", () => { packComponents(graph); resolve(); });
+    lay.run();
+  });
+}
+
+/* ELK pone en fila los sistemas que no se tocan entre si (un frontend con su backend, otro
+   servicio aparte, un worker). Aqui se reparten en estantes con la proporcion del lienzo. */
+function packComponents(graph) {
+  const roots = graph.nodes().filter((n) => n.parent().empty());
+  const parentOf = new Map(roots.map((r) => [r.id(), r.id()]));
+  const find = (x) => (parentOf.get(x) === x ? x : (parentOf.set(x, find(parentOf.get(x))), parentOf.get(x)));
+  const rootOf = (n) => (n.parent().empty() ? n : n.ancestors().last());
+  graph.edges().forEach((e) => {
+    const a = find(rootOf(e.source()).id()), b = find(rootOf(e.target()).id());
+    if (a !== b) parentOf.set(a, b);
+  });
+  const comps = new Map();
+  roots.forEach((r) => { const k = find(r.id()); (comps.get(k) ?? comps.set(k, []).get(k)).push(r); });
+  if (comps.size < 2) return;
+
+  const boxes = [...comps.values()].map((rs) => {
+    const col = graph.collection(rs).union(graph.collection(rs).descendants());
+    return { col, bb: col.boundingBox() };
+  }).sort((a, b) => b.bb.h * b.bb.w - a.bb.h * a.bb.w);
+  const GAP = 60;
+  const area = boxes.reduce((s, b) => s + (b.bb.w + GAP) * (b.bb.h + GAP), 0);
+  const ratio = $("#stage").clientWidth / Math.max(1, $("#stage").clientHeight);
+  const rowWidth = Math.max(boxes[0].bb.w, Math.sqrt(area * ratio));
+  let x = 0, y = 0, rowH = 0;
+  for (const b of boxes) {
+    if (x > 0 && x + b.bb.w > rowWidth) { x = 0; y += rowH + GAP; rowH = 0; }
+    const dx = x - b.bb.x1, dy = y - b.bb.y1;
+    b.col.filter((n) => !n.isParent()).forEach((n) => n.position({ x: n.position("x") + dx, y: n.position("y") + dy }));
+    x += b.bb.w + GAP;
+    rowH = Math.max(rowH, b.bb.h);
+  }
+}
+
+function scaleFor(w, h) {
+  const el = $("#stage");
+  return Math.min((el.clientWidth - 48) / w, (el.clientHeight - 48) / h, 1.15);
+}
+function fitView(mode = lastFit) {
+  if (!cy) return;
+  const bb = cy.elements().boundingBox();
+  let k = scaleFor(bb.w, bb.h);
+  const W = cy.width(), H = cy.height();
+  if (mode === "top" && k < 0.6) k = Math.min((W - 48) / bb.w, 1);
+  cy.zoom(k);
+  cy.pan({ x: (W - bb.w * k) / 2 - bb.x1 * k, y: bb.h * k > H ? 24 - bb.y1 * k : (H - bb.h * k) / 2 - bb.y1 * k });
+}
+// Si el lienzo cambia de tamaño (carga inicial, paneles, ventana) se vuelve a encajar, salvo
+// que la persona ya haya movido o acercado la vista: eso no se le deshace.
+let viewTouched = false;
+["wheel", "pointerdown"].forEach((ev) => $("#canvas").addEventListener(ev, () => (viewTouched = true), { passive: true }));
+new ResizeObserver(() => { if (!cy) return; cy.resize(); if (!viewTouched) fitView(); }).observe($("#stage"));
+
+function zoomBy(f) {
+  if (cy) cy.zoom({ level: cy.zoom() * f, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } });
+}
+
+function savePositions() {
+  if (!cy) return;
+  const pos = {};
+  cy.nodes().filter((n) => !n.isParent()).forEach((n) => (pos[n.data("key")] = { ...n.position() }));
+  store.set("pos:" + viewKey(), pos);
+}
+
+/* Arrastre elastico: los conectados siguen al bloque con un poco de retraso —los directos mas
+   que los de segundo nivel— y se asientan al soltar. Mover un grupo mueve todo lo de dentro. */
+function wireGraph(graph) {
+  const box = $("#canvas");
+  graph.on("tap", "node", (e) => current.actions[e.target.id()]?.());
+  graph.on("mouseover", "node", (e) => (box.style.cursor = current.actions[e.target.id()] ? "pointer" : "grab"));
+  graph.on("mouseout", "node", () => (box.style.cursor = ""));
+
+  let drag = null, raf = 0;
+  const leavesOf = (col) => col.toArray().flatMap((n) => (n.isParent() ? n.descendants().filter((d) => !d.isParent()).toArray() : [n]));
+  graph.on("grab", "node", (e) => {
+    const n = e.target;
+    const self = n.union(n.descendants()).union(n.ancestors());
+    const seeds = n.isParent() ? n.descendants() : n;
+    const ring1 = seeds.neighborhood("node").not(self);
+    const ring2 = followDepth > 1 ? ring1.neighborhood("node").not(self).not(ring1) : graph.collection();
+    const seen = new Set();
+    const followers = !followDepth ? [] : [
+      ...leavesOf(ring1).map((m) => ({ m, f: 0.85 })),
+      ...leavesOf(ring2).map((m) => ({ m, f: 0.45 })),
+    ].filter(({ m }) => !self.contains(m) && !seen.has(m.id()) && seen.add(m.id()));
+    followers.forEach((x) => { x.orig = { ...x.m.position() }; x.m.addClass("follow"); });
+    drag = { n, start: { ...n.position() }, followers, released: false };
+    // Temporizador y no requestAnimationFrame: rAF se detiene cuando la pestaña no se pinta y el
+    // arrastre quedaria a medias y sin guardarse
+    clearTimeout(raf);
+    raf = setTimeout(step, 16);
+  });
+  graph.on("free", "node", () => { if (drag) drag.released = true; });
+
+  function step() {
+    if (!drag || graph.destroyed()) return;
+    const p = drag.n.position();
+    const dx = p.x - drag.start.x, dy = p.y - drag.start.y;
+    let moving = false;
+    for (const x of drag.followers) {
+      const cur = x.m.position();
+      const tx = x.orig.x + dx * x.f, ty = x.orig.y + dy * x.f;
+      const nx = cur.x + (tx - cur.x) * 0.2, ny = cur.y + (ty - cur.y) * 0.2;
+      if (Math.abs(tx - nx) > 0.4 || Math.abs(ty - ny) > 0.4) moving = true;
+      x.m.position({ x: nx, y: ny });
+    }
+    if (!drag.released || moving) { raf = setTimeout(step, 16); return; }
+    drag.followers.forEach((x) => x.m.removeClass("follow"));
+    drag = null;
+    savePositions();
+  }
+}
+
+/* ───────── vistas ───────── */
+function render() {
+  const { view, id } = state;
+  // Cuadrícula de plano técnico solo en los diagramas de flujo
+  $("#stage").classList.toggle("grid", view === "fn" || view === "plan");
+  if (view === "group" && G.groups[id]) return viewGroup(id);
+  if (view === "file" && G.files[id]) return viewFile(id);
+  if (view === "fn" && G.fns[id]) return viewFn(id);
+  if (view === "trace" && G.fns[id]) return viewTrace(id);
+  if (view === "all") return viewAll();
+  if (view === "plan" && planOf(id)) return viewPlan(id);
+  return viewSystem();
+}
+
+function crumbs(parts) {
+  const c = $("#crumbs");
+  c.innerHTML = parts.map((p, i) => i === parts.length - 1 ? `<span class="here">${esc(p.label)}</span>` : `<button data-go="${esc(p.go)}">${esc(p.label)}</button><span class="sep">›</span>`).join("") +
+    `<div class="tools">${state.view === "trace" ? `<span class="sub" style="align-self:center">Profundidad</span>${[0, 2, 3, 4, 6].map((n) => `<button class="btn ${traceDepth === n ? "on" : ""}" data-depth="${n}" title="${n === 0 ? "la mayor que se lee de un vistazo" : ""}">${n === 0 ? "auto" : n === 6 ? "todo" : n}</button>`).join("")}` : ""}<span class="sub" style="align-self:center" title="Al arrastrar un bloque, cuántos niveles de conectados lo siguen">Arrastre</span>${[0, 1, 2].map((n) => `<button class="btn ${followDepth === n ? "on" : ""}" data-follow="${n}">${["solo", "+1", "+2"][n]}</button>`).join("")}<button class="btn" id="zreset" title="Olvida lo que moviste en esta vista">Reordenar</button><button class="btn" id="zin" title="Acercar">+</button><button class="btn" id="zout" title="Alejar">−</button><button class="btn" id="zfit">Encajar</button></div>`;
+  c.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => (location.hash = b.dataset.go)));
+  c.querySelectorAll("[data-depth]").forEach((b) => (b.onclick = () => { traceDepth = +b.dataset.depth; store.set("traceDepth", traceDepth); render(); }));
+  c.querySelectorAll("[data-follow]").forEach((b) => (b.onclick = () => {
+    followDepth = +b.dataset.follow; store.set("followDepth", followDepth);
+    c.querySelectorAll("[data-follow]").forEach((x) => x.classList.toggle("on", +x.dataset.follow === followDepth));
+  }));
+  $("#zreset").onclick = () => { try { localStorage.removeItem("codemap:pos:" + viewKey()); } catch {} render(); };
+  $("#zin").onclick = () => zoomBy(1.25); $("#zout").onclick = () => zoomBy(0.8); $("#zfit").onclick = () => fitView();
+}
+const crumbSystem = { label: "Sistema", go: "#/system" };
+const crumbGroup = (g) => ({ label: G.groups[g].name, go: "#/group/" + encodeURIComponent(g) });
+const crumbFile = (f) => ({ label: G.files[f].name, go: "#/file/" + encodeURIComponent(f) });
+const crumbFn = (f) => ({ label: shortFn(G.fns[f]), go: "#/fn/" + encodeURIComponent(f) });
+
+/* Nivel 0 — el sistema */
+/* Todo el código — cada función de cada archivo, dentro de su archivo y su grupo, con todas
+   las llamadas. No es para leerlo de un vistazo (para eso está Sistema): es el mapa entero
+   para recorrerlo con zoom, buscar dónde vive algo y ver cuánto se enreda cada zona. */
+function viewAll() {
+  crumbs([crumbSystem, { label: "Todo el código" }]);
+  $("#hint").textContent = "Todas las funciones y llamadas · rueda para acercarte · clic en una función para ver su flujo";
+  const d = new Diagram("LR");
+  d.nested = true;
+  const faded = [];
+  for (const g of groupsSorted) {
+    const fill = layerFill(g.layer);
+    d.sub("g:" + g.id, g.name, () => {
+      for (const fid of g.files) {
+        const f = G.files[fid];
+        if (!f.fns.length) continue;
+        d.sub("f:" + fid, f.name, () => {
+          for (const id of f.fns) {
+            const fn = G.fns[id];
+            const label = (fn.change ? "● " : "") + (fn.kind === "route" ? `${fn.route.method} ${fn.route.path}` : shortFn(fn)) + (fn.warnings.length ? " ⚠" : "");
+            const nid = d.node("fn:" + id, label, { shape: fn.kind === "route" ? "stadium" : "rect", style: nodeStyle({ fill, change: !!fn.change }), onClick: () => go("fn", id) });
+            if (onlyChanges && !fn.change) faded.push(nid);
+          }
+        }, { ...clusterStyle(), fill: css("--surface") });
+      }
+    }, clusterStyle());
+  }
+  for (const a of Object.values(G.apis ?? {})) d.node("api:" + a.host, `↗ ${a.host}`, { shape: "cyl", style: nodeStyle({ fill: css("--l-ext"), dashed: true }), onClick: () => showApi(a.host) });
+  for (const fn of Object.values(G.fns)) {
+    for (const c of fn.calls) {
+      const isHttp = G.fns[c].kind === "route" && G.fns[c].file !== fn.file && G.http.some((h) => h.from === fn.id && h.to === c);
+      d.edge(d.id("fn:" + fn.id), d.id("fn:" + c), isHttp ? { thick: true, label: "HTTP" } : {});
+    }
+    for (const host of new Set(fn.apiCalls ?? [])) d.edge(d.id("fn:" + fn.id), d.id("api:" + host), { dashed: true });
+  }
+  // Una sola dirección: con 500 nodos probar las dos duplica la espera
+  draw(d, { faded, fit: "all" });
+  panelAll();
+}
+function panelAll() {
+  const s = G.meta.stats;
+  const edges = Object.values(G.fns).reduce((n, f) => n + f.calls.length, 0);
+  const busiest = Object.values(G.fns).map((f) => [f, f.calls.length + f.calledBy.length]).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  $("#panel").innerHTML = `
+    <h2>Todo el código</h2>
+    <p>${s.files} archivos, ${s.fns} funciones y ${edges} llamadas, dentro de su archivo y su grupo. Para entender el sistema de un vistazo usa <b>Sistema</b>; esta vista es para recorrer el detalle y ver dónde se concentra la complejidad.</p>
+    <div class="row"><button class="btn" data-go="#/system">← Vista resumida</button></div>
+    <h3>Las más conectadas</h3>
+    <p class="sub" style="word-break:normal">Funciones con más llamadas entrantes y salientes: si fallan, arrastran a más gente.</p>
+    <div class="links">${busiest.map(([f, n]) => `<button data-fn="${esc(f.id)}">${esc(shortFn(f))} <small>${n} conexiones · ${esc(G.files[f.file].name)}</small></button>`).join("")}</div>`;
+  wirePanel();
+  $("#panel").querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => (location.hash = b.dataset.go)));
+}
+
+/* ───────── Diagrama primero ─────────
+   El plan que el agente propone antes de escribir código, junto al flujo del código actual.
+   Los pasos del plan se colorean según el código real: verde lo cumple, rojo punteado falta. */
+const planOf = (id) => (G.plans ?? []).find((p) => p.id === id);
+const canWrite = location.protocol.startsWith("http");
+let selectedPlanStep = null;
+
+function viewPlan(id) {
+  const plan = planOf(id);
+  crumbs([crumbSystem, { label: "Planes" }, { label: plan.titulo }]);
+  $("#hint").textContent = "Recuadro azul: lo que propone el plan · gris: lo que hace el código hoy · clic en un paso del plan para comentarlo";
+  const d = new Diagram("TD");
+  plan.cambios.forEach((ch, ci) => {
+    const target = G.fns[ch.funcion];
+    const name = target ? (target.route ? `${target.route.method} ${target.route.fullPath}` : shortFn(target)) : ch.funcion.split("#").pop();
+    const c = ch.flow.nodes.filter((n) => n.check);
+    const score = c.length ? `  ·  ${c.filter((n) => n.check === "ok").length}/${c.length} OK` : "";
+    d.sub(`plan:${ci}`, `PLAN  ·  ${ch.accion ?? "modificar"} ${name}${score}`, () => {
+      for (const n of ch.flow.nodes) d.card(n.id, cardFromPlan(n), { onClick: () => selectPlanStep(id, ci, n), meta: n });
+      for (const e of ch.flow.edges) d.edge(d.id(e.from), d.id(e.to), { label: e.label, dashed: e.dashed });
+    }, { fill: css("--accent-soft"), stroke: css("--accent"), color: css("--accent"), bw: 1.5, bstyle: "solid", mono: true });
+    if (target?.flow) {
+      d.sub(`code:${ci}`, `CÓDIGO ACTUAL  ·  ${G.files[target.file].name}:${target.line}`, () => {
+        for (const n of target.flow.nodes) d.card(`code:${ci}:${n.id}`, cardFromCode(n), { onClick: () => go("fn", target.id) });
+        for (const e of target.flow.edges) d.edge(d.id(`code:${ci}:${e.from}`), d.id(`code:${ci}:${e.to}`), { label: e.label, dashed: e.dashed });
+      }, { ...clusterStyle(), bstyle: "dashed", mono: true });
+    }
+  });
+  draw(d, { fit: "top" });
+  panelPlan(id);
+}
+
+function selectPlanStep(planId, ci, node) {
+  cy?.$(".sel").removeClass("sel");
+  const nid = Object.entries(current.meta).find(([, m]) => m === node)?.[0];
+  if (nid) cy?.getElementById(nid).addClass("sel");
+  selectedPlanStep = { ci, node };
+  panelPlan(planId);
+}
+
+function panelPlan(id) {
+  const plan = planOf(id);
+  const c = plan.cumplimiento ?? { ok: 0, falta: 0, total: 0, extras: 0 };
+  const step = selectedPlanStep;
+  const disabled = canWrite ? "" : "disabled title=\"Abre el mapa con node serve.mjs para poder guardar\"";
+  const prompt = plan.estado === "aprobado"
+    ? `El plan "${plan.titulo}" (.codemap/plans/${plan.id}.json) está aprobado. Impleméntalo y comprueba el cumplimiento con: node .codemap/build.mjs --plan ${plan.id}`
+    : plan.estado === "cambios"
+      ? `Revisé el plan "${plan.titulo}" (.codemap/plans/${plan.id}.json) y pedí cambios: lee la sección "revision", ajusta el plan y vuelve a proponerlo. No implementes todavía.`
+      : `Revisa el plan "${plan.titulo}" (.codemap/plans/${plan.id}.json).`;
+  $("#panel").innerHTML = `
+    <div class="badges"><span class="estado e-${esc(plan.estado)}">${esc(plan.estado)}</span><span class="badge">plan · ${esc(plan.id)}</span></div>
+    <h2>${esc(plan.titulo)}</h2>
+    ${plan.error ? `<div class="warnbox"><b>JSON inválido</b> — ${esc(plan.error)}</div>` : ""}
+    ${plan.intencion ? `<p>${esc(plan.intencion)}</p>` : ""}
+    <h3>Decisión</h3>
+    <div class="row">
+      <button class="btn primary" data-estado="aprobado" ${disabled}>Aprobar</button>
+      <button class="btn" data-estado="cambios" ${disabled}>Pedir cambios</button>
+      <button class="btn" id="planCopy">Copiar para Claude</button>
+    </div>
+    <p class="sub" style="word-break:normal">${plan.estado === "propuesto" ? "Nada se implementa hasta que lo apruebes." : plan.estado === "aprobado" ? "Aprobado: Claude puede implementarlo. El mapa irá marcando qué pasos ya cumple el código." : plan.estado === "cambios" ? "Pediste cambios: Claude debe ajustar el plan antes de implementar." : "Implementado."}</p>
+
+    <h3>${step ? `Paso seleccionado` : "Comentar el plan"}</h3>
+    ${step ? `<div class="doc">${esc(step.node.label)}${step.node.porque ? `\n\n✗ ${esc(step.node.porque)}` : step.node.check === "ok" ? "\n\n✓ El código ya lo hace" : ""}</div>` : ""}
+    <textarea id="cText" placeholder="${step ? "¿Qué cambiarías en este paso?" : "Comentario general sobre el plan…"}"></textarea>
+    <div class="row"><button class="btn" id="planComment" ${disabled}>Guardar comentario</button>${step ? `<button class="btn" id="planUnselect">Comentar el plan entero</button>` : ""}</div>
+    ${(plan.revision ?? []).length ? `<h3>Revisión (${plan.revision.length})</h3>${plan.revision.map((r) => `<div class="comment">${esc(r.texto)}<small>${r.pasoTexto ? `paso: ${esc(cut(r.pasoTexto, 60))} · ` : ""}${new Date(r.fecha).toLocaleString()}${canWrite ? ` · <a href="#" data-quitar="${esc(r.fecha)}">quitar</a>` : ""}</small></div>`).join("")}` : ""}
+
+    <h3>Cumplimiento del código · ${c.ok}/${c.total}</h3>
+    ${plan.cambios.map((ch) => {
+      const fn = G.fns[ch.funcion];
+      const checks = ch.flow.nodes.filter((n) => n.check).sort((a, b) => (a.check === "falta" ? -1 : 0) - (b.check === "falta" ? -1 : 0));
+      return `
+        <p style="margin-top:10px"><b>${esc(ch.accion ?? "modificar")}</b> ${fn ? `<a href="#/fn/${encodeURIComponent(fn.id)}">${esc(fn.route ? fn.route.method + " " + fn.route.fullPath : fn.name)}</a>` : `<code>${esc(ch.funcion)}</code>`}${ch.resumen ? `<br><span class="sub" style="word-break:normal">${esc(ch.resumen)}</span>` : ""}</p>
+        ${ch.notas.map((n) => `<p class="sub" style="word-break:normal">· ${esc(n)}</p>`).join("")}
+        ${checks.map((n) => `<div class="check ${n.check}"><b>${n.check === "ok" ? "✓" : "✗"}</b><div>${esc(cut(n.label.replace(/\n/g, " "), 90))}${n.porque ? `<small>${esc(n.porque)}</small>` : ""}</div></div>`).join("")}
+        ${ch.extras.map((x) => `<div class="check extra"><b>+</b><div>${esc(x.texto)}<small>Hecho en el código, no previsto en el plan</small></div></div>`).join("")}
+        ${(ch.avisosCodigo ?? []).map(warnHtml).join("")}`;
+    }).join("")}
+    <h3>Historial</h3>
+    ${(plan.historial ?? []).map((h) => `<div class="sub">${new Date(h.fecha).toLocaleString()} · ${esc(h.estado)}${h.por ? ` · ${esc(h.por)}` : ""}</div>`).join("")}`;
+
+  const send = async (body, msg) => {
+    try {
+      const r = await fetch(`api/plans/${encodeURIComponent(id)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const out = await r.json();
+      if (!r.ok) throw new Error(out.error);
+      toast(msg);
+      setTimeout(() => location.reload(), 300);
+    } catch (e) { toast("No se pudo guardar: " + e.message); }
+  };
+  $("#panel").querySelectorAll("[data-estado]").forEach((b) => (b.onclick = () => {
+    const texto = $("#cText").value.trim();
+    if (b.dataset.estado === "cambios" && !texto && !(plan.revision ?? []).length) { toast("Escribe qué hay que cambiar"); $("#cText").focus(); return; }
+    send({ estado: b.dataset.estado, comentario: texto ? { paso: step?.node.id ?? null, pasoTexto: step?.node.label ?? null, texto } : undefined }, b.dataset.estado === "aprobado" ? "Plan aprobado" : "Cambios pedidos");
+  }));
+  $("#planComment").onclick = () => {
+    const texto = $("#cText").value.trim();
+    if (!texto) return;
+    send({ comentario: { paso: step?.node.id ?? null, pasoTexto: step?.node.label ?? null, texto } }, "Comentario guardado en el plan");
+  };
+  $("#planUnselect")?.addEventListener("click", () => { selectedPlanStep = null; cy?.$(".sel").removeClass("sel"); panelPlan(id); });
+  $("#planCopy").onclick = () => copy(prompt, "Copiado: pégalo en Claude");
+  $("#panel").querySelectorAll("[data-quitar]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); send({ quitar: a.dataset.quitar }, "Comentario quitado"); }));
+}
+
+function viewSystem() {
+  crumbs([crumbSystem]);
+  $("#hint").textContent = "Clic en un bloque para ver sus archivos · rueda para zoom · arrastra para mover";
+  const d = new Diagram("TB");
+  const faded = [];
+  // Sin subgrafos por capa: dagre ordena por dependencias (card → módulo → núcleo → config),
+  // que es justo el orden en que se lee. La capa va en el color.
+  for (const g of groupsSorted) {
+    const nFns = g.files.reduce((n, f) => n + G.files[f].fns.length, 0);
+    const ch = groupChanges[g.id], w = groupWarn(g.id);
+    const label = `${ch ? "● " : ""}${g.name}\n${g.files.length} archivos · ${nFns} funciones${w ? ` · ⚠ ${w}` : ""}`;
+    const id = d.node("g:" + g.id, label, { shape: "round", style: nodeStyle({ fill: layerFill(g.layer), change: !!ch }), onClick: () => go("group", g.id) });
+    if (onlyChanges && !ch) faded.push(id);
+  }
+  const apis = Object.values(G.apis ?? {});
+  // Sueltos y no en un grupo: un grupo comun ataria entre si sistemas que no se hablan
+  for (const a of apis) d.node("api:" + a.host, `↗ ${a.host}`, { shape: "cyl", style: nodeStyle({ fill: css("--l-ext"), dashed: true }), onClick: () => showApi(a.host) });
+
+  // imports agregados entre grupos
+  const edges = new Map();
+  for (const f of Object.values(G.files)) for (const im of f.imports) {
+    if (!im.internal) continue;
+    const a = f.group, b = G.files[im.to].group;
+    if (a === b) continue;
+    const k = a + "→" + b, e = edges.get(k) ?? { a, b, typeOnly: true, n: 0 };
+    e.typeOnly &&= im.typeOnly; e.n++; edges.set(k, e);
+  }
+  const http = new Map();
+  for (const h of G.http) if (h.to) {
+    const a = G.fns[h.from].file, b = G.fns[h.to].file;
+    http.set(G.files[a].group + "→" + G.files[b].group, { a: G.files[a].group, b: G.files[b].group });
+  }
+  // Reduccion transitiva: si A→B→C ya existe, la flecha directa A→C sobra en la vista macro
+  // (se ve al bajar de nivel). Sin esto el diagrama es una maraña de 40 flechas.
+  const runtime = [...edges.values()].filter((e) => !e.typeOnly).concat([...http.values()]);
+  const adj = new Map();
+  for (const e of runtime) (adj.get(e.a) ?? adj.set(e.a, new Set()).get(e.a)).add(e.b);
+  const reachesWithout = (from, to, skipA, skipB) => {
+    const stack = [from], seen = new Set();
+    while (stack.length) {
+      const x = stack.pop();
+      for (const y of adj.get(x) ?? []) {
+        if (x === skipA && y === skipB) continue;
+        if (y === to) return true;
+        if (!seen.has(y)) { seen.add(y); stack.push(y); }
+      }
+    }
+    return false;
+  };
+  for (const e of edges.values()) {
+    if (http.has(e.a + "→" + e.b)) continue;
+    if (e.typeOnly ? reachesWithout(e.a, e.b) : reachesWithout(e.a, e.b, e.a, e.b)) continue;
+    d.edge(d.id("g:" + e.a), d.id("g:" + e.b), { dashed: e.typeOnly });
+  }
+  for (const e of http.values()) d.edge(d.id("g:" + e.a), d.id("g:" + e.b), { thick: true, label: "HTTP" });
+  const apiEdges = new Set();
+  for (const a of apis) for (const c of a.calls) apiEdges.add(G.files[G.fns[c.from].file].group + "→" + a.host);
+  for (const k of apiEdges) { const [g, host] = k.split("→"); d.edge(d.id("g:" + g), d.id("api:" + host), { dashed: true }); }
+
+  draw(d, { faded, fit: "auto" });
+  panelSystem();
+}
+
+/* Nivel 1 — archivos de un grupo */
+function viewGroup(gid) {
+  const g = G.groups[gid];
+  crumbs([crumbSystem, { label: g.name }]);
+  $("#hint").textContent = "Clic en un archivo para ver sus funciones · los bloques grises son otros grupos";
+  const d = new Diagram("LR");
+  const faded = [];
+  const neighbors = new Map();
+  d.sub("g", g.name, () => {
+    for (const fid of g.files) {
+      const f = G.files[fid];
+      const w = fileWarn[fid];
+      const label = `${f.change ? "● " : ""}${f.name}\n${cut(f.summary ?? "sin descripción", 70)}\n${f.fns.length} funciones${w ? ` · ⚠ ${w}` : ""}`;
+      const id = d.node("f:" + fid, label, { style: nodeStyle({ fill: layerFill(g.layer), change: !!f.change }), onClick: () => go("file", fid) });
+      if (onlyChanges && !f.change) faded.push(id);
+    }
+  }, clusterStyle());
+  const seen = new Set();
+  const addEdge = (a, b, opts) => { const k = a + ">" + b; if (seen.has(k)) return; seen.add(k); d.edge(a, b, opts); };
+  const neighbor = (og) => d.node("g:" + og, G.groups[og].name, { shape: "round", style: nodeStyle({ fill: css("--sunken"), dashed: true }), onClick: () => go("group", og) });
+  for (const fid of g.files) for (const im of G.files[fid].imports) {
+    if (!im.internal) continue;
+    const og = G.files[im.to].group;
+    if (og === gid) addEdge(d.id("f:" + fid), d.id("f:" + im.to), { dashed: im.typeOnly });
+    else addEdge(d.id("f:" + fid), neighbor(og), { dashed: im.typeOnly });
+  }
+  for (const f of Object.values(G.files)) {
+    if (f.group === gid) continue;
+    for (const im of f.imports) if (im.internal && G.files[im.to].group === gid && !im.typeOnly) addEdge(neighbor(f.group), d.id("f:" + im.to), { dashed: true });
+  }
+  for (const h of G.http) if (h.to) {
+    const a = G.fns[h.from].file, b = G.fns[h.to].file;
+    if (G.files[a].group === gid && G.files[b].group !== gid) addEdge(d.id("f:" + a), neighbor(G.files[b].group), { thick: true, label: `${h.method} ${h.url}` });
+    if (G.files[b].group === gid && G.files[a].group !== gid) addEdge(neighbor(G.files[a].group), d.id("f:" + b), { thick: true, label: `${h.method} ${h.url}` });
+  }
+  draw(d, { faded, fit: "auto" });
+  panelGroup(gid);
+}
+
+/* Nivel 2 — funciones de un archivo */
+function viewFile(fid) {
+  const f = G.files[fid];
+  crumbs([crumbSystem, crumbGroup(f.group), { label: f.name }]);
+  $("#hint").textContent = "Clic en una función para ver su flujo interno · a la derecha, lo que llama fuera de este archivo";
+  const d = new Diagram("LR");
+  const faded = [];
+  const own = new Set(f.fns);
+  d.sub("file", f.name, () => {
+    for (const id of f.fns) {
+      const fn = G.fns[id];
+      const nid = d.node("fn:" + id, fnLabel(fn), { shape: fn.kind === "route" ? "stadium" : "rect", style: nodeStyle({ fill: layerFill(G.groups[f.group].layer), change: !!fn.change }), onClick: () => go("fn", id) });
+      if (onlyChanges && !fn.change) faded.push(nid);
+    }
+  }, clusterStyle());
+  // llamadas salientes a otros archivos, agrupadas por archivo
+  const out = new Map(), inc = new Map();
+  for (const id of f.fns) for (const c of G.fns[id].calls) if (!own.has(c)) (out.get(G.fns[c].file) ?? out.set(G.fns[c].file, new Set()).get(G.fns[c].file)).add(c);
+  for (const id of f.fns) for (const c of G.fns[id].calledBy) if (!own.has(c)) (inc.get(G.fns[c].file) ?? inc.set(G.fns[c].file, new Set()).get(G.fns[c].file)).add(c);
+  const extNode = (c) => d.node("fn:" + c, shortFn(G.fns[c]), { style: nodeStyle({ fill: css("--sunken"), dashed: true }), onClick: () => go("fn", c) });
+  for (const [ofile, set] of inc) d.sub("in:" + ofile, "↘ " + G.files[ofile].name, () => set.forEach(extNode), clusterStyle());
+  for (const [ofile, set] of out) if (!inc.has(ofile)) d.sub("out:" + ofile, G.files[ofile].name + " ↗", () => set.forEach(extNode), clusterStyle());
+    else set.forEach(extNode);
+  const seen = new Set();
+  for (const id of f.fns) for (const c of G.fns[id].calls) {
+    const k = id + ">" + c; if (seen.has(k)) continue; seen.add(k);
+    const isHttp = G.fns[c].kind === "route" && G.fns[c].file !== fid;
+    d.edge(d.id("fn:" + id), d.id("fn:" + c), { thick: isHttp, label: isHttp ? "HTTP" : null });
+  }
+  for (const id of f.fns) for (const c of G.fns[id].calledBy) if (!own.has(c)) {
+    const k = c + ">" + id; if (seen.has(k)) continue; seen.add(k);
+    const viaHttp = G.fns[id].kind === "route" && G.http.some((h) => h.from === c && h.to === id);
+    d.edge(d.id("fn:" + c), d.id("fn:" + id), viaHttp ? { thick: true, label: "HTTP" } : { dashed: true });
+  }
+  for (const id of f.fns) for (const host of new Set(G.fns[id].apiCalls ?? [])) {
+    d.node("api:" + host, host, { shape: "cyl", style: nodeStyle({ fill: css("--l-ext"), dashed: true }), onClick: () => showApi(host) });
+    d.edge(d.id("fn:" + id), d.id("api:" + host), { dashed: true });
+  }
+  draw(d, { faded, fit: "auto" });
+  panelFile(fid);
+}
+function fnLabel(fn) {
+  const head = fn.kind === "route" ? `${fn.route.method} ${fn.route.fullPath}` : `${shortFn(fn)}${fn.kind === "component" || fn.kind === "entry" ? "" : "()"}`;
+  const tags = [fn.kind === "component" ? "componente" : fn.kind === "entry" ? "entrada" : null, fn.exported ? "export" : null, fn.async ? "async" : null].filter(Boolean).join(" · ");
+  return `${fn.change ? "● " : ""}${head}${tags ? `\n${tags}` : ""}${fn.warnings.length ? `\n⚠ ${fn.warnings.length}` : ""}`;
+}
+
+/* Nivel 3 — flujo interno de una función */
+function viewFn(id) {
+  const fn = G.fns[id], f = G.files[fn.file];
+  crumbs([crumbSystem, crumbGroup(f.group), crumbFile(fn.file), { label: shortFn(fn) }]);
+  $("#hint").textContent = "Clic en un paso para ver su código y comentarlo · → función a la que llama";
+  if (!fn.flow) {
+    clearCanvas(`<div class="empty">Esta ruta delega en otra función; no tiene cuerpo propio que dibujar.</div>`);
+    current = { actions: {}, meta: {} };
+    return panelFn(id);
+  }
+  const d = new Diagram("TD");
+  for (const n of fn.flow.nodes) d.card(n.id, cardFromCode(n), { onClick: () => selectFlowNode(id, n), meta: n });
+  for (const e of fn.flow.edges) d.edge(d.id(e.from), d.id(e.to), { label: e.label, dashed: e.dashed });
+  draw(d, { fit: "top" });
+  panelFn(id);
+}
+
+/* Rastreo — todo lo que se ejecuta desde una función, cruzando archivos */
+function viewTrace(id) {
+  const root = G.fns[id], f = G.files[root.file];
+  crumbs([crumbSystem, crumbGroup(f.group), crumbFile(root.file), crumbFn(id), { label: "Rastreo" }]);
+  $("#hint").textContent = "Todo lo que se ejecuta a partir de esta función, archivo por archivo · clic para ver el flujo de cada una";
+  const MAX_NODES = 70;
+  const reach = (maxDepth) => {
+    const depth = new Map([[id, 0]]), order = [id];
+    for (let i = 0; i < order.length && order.length < MAX_NODES; i++) {
+      const cur = order[i];
+      if (depth.get(cur) >= maxDepth) continue;
+      for (const c of G.fns[cur].calls) if (!depth.has(c)) { depth.set(c, depth.get(cur) + 1); order.push(c); if (order.length >= MAX_NODES) break; }
+    }
+    return { depth, order };
+  };
+  // Automatica: la mayor profundidad que sigue cabiendo en una mirada (≤ 25 funciones)
+  let chosen = traceDepth;
+  if (!chosen) { chosen = 1; for (const d of [2, 3, 4]) if (reach(d).order.length <= 25) chosen = d; }
+  const { depth, order } = reach(chosen);
+  const byFile = new Map();
+  for (const n of order) (byFile.get(G.fns[n].file) ?? byFile.set(G.fns[n].file, []).get(G.fns[n].file)).push(n);
+  const d = new Diagram("LR");
+  for (const [file, ids] of byFile) {
+    const layer = G.groups[G.files[file].group].layer;
+    d.sub("f:" + file, `${G.groups[G.files[file].group].name} · ${G.files[file].name}`, () => {
+      for (const n of ids) {
+        const fn = G.fns[n];
+        const hidden = fn.calls.filter((c) => !depth.has(c)).length;
+        d.node("fn:" + n, fnLabel(fn) + (fn.summary ? `\n${cut(fn.summary, 60)}` : "") + (hidden ? `\n+${hidden} más adentro` : ""), { shape: fn.kind === "route" ? "stadium" : "rect", style: nodeStyle({ fill: layerFill(layer), change: !!fn.change, stroke: n === id ? css("--accent") : null, width: n === id ? 3 : 1.5 }), onClick: () => go("fn", n) });
+      }
+    }, clusterStyle());
+  }
+  const inSet = new Set(order);
+  for (const n of order) {
+    for (const c of G.fns[n].calls) if (inSet.has(c)) {
+      const isHttp = G.fns[c].kind === "route" && G.fns[c].file !== G.fns[n].file;
+      d.edge(d.id("fn:" + n), d.id("fn:" + c), { thick: isHttp, label: isHttp ? `HTTP ${G.fns[c].route.method}` : null });
+    }
+    for (const host of new Set(G.fns[n].apiCalls ?? [])) {
+      d.node("api:" + host, host, { shape: "cyl", style: nodeStyle({ fill: css("--l-ext"), dashed: true }), onClick: () => showApi(host) });
+      d.edge(d.id("fn:" + n), d.id("api:" + host), { dashed: true });
+    }
+  }
+  draw(d, { fit: "auto" });
+  panelFn(id, { trace: order.length, truncated: order.length >= MAX_NODES, depth: chosen });
+}
+
+/* ───────── panel derecho ───────── */
+function panelSystem() {
+  const m = G.meta, s = m.stats;
+  const changed = m.changedFiles ?? [];
+  $("#panel").innerHTML = `
+    <h2>${esc(m.name)}</h2>
+    <div class="sub">Generado ${new Date(m.generatedAt).toLocaleString()} · cambios contra <code>${esc(m.base)}</code></div>
+    <p>El mapa sale del propio código (compilador de TypeScript y <code>ast</code> de Python): imports, llamadas y rutas resueltas a su declaración. Las descripciones son los comentarios de documentación del código.</p>
+    <h3>Cómo leerlo</h3>
+    <div class="legend">
+      <div class="sw" style="border-color:var(--change);border-width:3px"></div><div>Cambió desde <code>${esc(m.base)}</code> (●)</div>
+      <div class="sw" style="border-style:dashed"></div><div>Solo importa tipos / servicio externo</div>
+      <div class="sw" style="border-width:3px"></div><div>Llamada HTTP (card → backend)</div>
+      <div class="sw" style="background:var(--warn-soft);border-color:var(--warn)"></div><div>⚠ Aviso de lineamientos</div>
+      ${LAYERS.filter(([l]) => l && groupsSorted.some((g) => g.layer === l)).map(([l, t]) => `<div class="sw" style="background:var(${layerVar(l)})"></div><div>${esc(t)}</div>`).join("")}
+    </div>
+    <div class="row"><button class="btn" id="goAll">Ver todo el código en un diagrama (${s.fns} funciones)</button></div>
+    <h3>Niveles</h3>
+    <p class="sub" style="word-break:normal">Sistema → grupo → archivo → función (flujo interno). Desde cualquier función, <b>Rastrear</b> muestra todo lo que ejecuta cruzando archivos.</p>
+    ${changed.length ? `<h3>Cambios (${changed.length} archivos)</h3><div class="links">${changed.map((f) => `<button data-file="${esc(f)}">● ${esc(f)}</button>`).join("")}</div>` : ""}
+    <h3>Grupos</h3>
+    <div class="links">${groupsSorted.map((g) => `<button data-group="${esc(g.id)}">${esc(g.name)} <small>· ${esc(cut(g.desc, 70))}</small></button>`).join("")}</div>`;
+  wirePanel();
+  $("#goAll").onclick = () => go("all");
+}
+
+function panelGroup(gid) {
+  const g = G.groups[gid];
+  $("#panel").innerHTML = `
+    <h2>${esc(g.name)}</h2>
+    <p>${esc(g.desc)}</p>
+    <h3>Archivos</h3>
+    <div class="links">${g.files.map((fid) => { const f = G.files[fid]; return `<button data-file="${esc(fid)}">${f.change ? "● " : ""}${esc(f.name)} <small>· ${esc(cut(f.summary ?? "sin descripción", 90))}</small></button>`; }).join("")}</div>`;
+  wirePanel();
+}
+
+function panelFile(fid) {
+  const f = G.files[fid];
+  const internal = f.imports.filter((i) => i.internal), external = f.imports.filter((i) => !i.internal);
+  const importedBy = Object.values(G.files).filter((o) => o.imports.some((i) => i.internal && i.to === fid));
+  $("#panel").innerHTML = `
+    <h2>${esc(f.name)}</h2>
+    <div class="sub">${esc(fid)} · ${f.lines} líneas</div>
+    <div class="badges">${f.change ? `<span class="badge change">${esc(f.change)}</span>` : ""}<span class="badge">${esc(G.groups[f.group].name)}</span></div>
+    ${f.summary ? `<p>${esc(f.summary)}</p>` : `<p class="sub">Sin descripción.</p>`}
+    ${f.warnings.map(warnHtml).join("")}
+    <div class="row"><a class="btn" href="${esc(vscode(fid, 1))}">Abrir en VS Code</a><button class="btn" id="askFile">Preguntar a Claude</button></div>
+    ${f.doc ? `<h3>Por qué existe</h3><div class="doc">${esc(f.doc)}</div>` : ""}
+    <h3>Funciones (${f.fns.length})</h3>
+    <div class="links">${f.fns.map((id) => fnLink(id)).join("")}</div>
+    <h3>Importa</h3>
+    <div class="links">${internal.map((i) => `<button data-file="${esc(i.to)}">${esc(G.files[i.to].name)} <small>${i.typeOnly ? "tipos · " : ""}${esc(cut(i.names.join(", "), 60))}</small></button>`).join("") || `<span class="sub">nada del proyecto</span>`}</div>
+    ${external.length ? `<div class="pills" style="margin-top:6px">${external.map((i) => `<span class="pill">${esc(i.to)}</span>`).join("")}</div>` : ""}
+    <h3>Lo importan</h3>
+    <div class="links">${importedBy.map((o) => `<button data-file="${esc(o.id)}">${esc(o.name)} <small>${esc(G.groups[o.group].name)}</small></button>`).join("") || `<span class="sub">nadie</span>`}</div>
+    ${commentsHtml(fid)}`;
+  $("#askFile").onclick = () => copy(`Explícame para qué existe ${fid} y cómo encaja en el sistema. Según el mapa, importa ${internal.map((i) => i.to).join(", ") || "nada interno"} y lo usan ${importedBy.map((o) => o.id).join(", ") || "nadie"}.`, "Pregunta copiada: pégala en Claude");
+  wirePanel(fid);
+}
+
+function panelFn(id, trace) {
+  const fn = G.fns[id];
+  const r = fn.route;
+  const n = selectedFlowNode;
+  $("#panel").innerHTML = `
+    <h2>${r ? `<span class="method m-${r.method}">${r.method}</span> ${esc(r.fullPath)}` : esc(shortFn(fn))}</h2>
+    <div class="sub">${esc(fn.file)}:${fn.line}–${fn.endLine}</div>
+    <div class="badges">
+      ${fn.change ? `<span class="badge change">${esc(fn.change)}</span>` : ""}
+      <span class="badge">${{ route: "ruta", function: "función", method: "método", component: "componente", entry: "entrada" }[fn.kind] ?? fn.kind}</span>
+      <span class="badge">${fn.lang === "py" ? "Python" : fn.file.endsWith(".tsx") ? "TSX" : "TypeScript"}</span>
+      ${fn.exported ? `<span class="badge">${fn.lang === "py" ? "pública" : "export"}</span>` : ""}${fn.async ? `<span class="badge">async</span>` : ""}
+      ${fn.summarySource === "ia" ? `<span class="badge ia">resumen IA</span>` : fn.summarySource === "ia-desactualizado" ? `<span class="badge change">resumen IA desactualizado</span>` : ""}
+    </div>
+    ${fn.summary ? `<p>${esc(fn.summary)}</p>` : `<p class="sub">Sin descripción.</p>`}
+    ${fn.warnings.map(warnHtml).join("")}
+    ${r ? routeHtml(r) : ""}
+    <div class="row">
+      ${state.view === "trace" ? `<button class="btn" data-fn="${esc(id)}">Ver flujo interno</button>` : `<button class="btn primary" id="traceBtn">Rastrear todo lo que ejecuta</button>`}
+      <a class="btn" href="${esc(vscode(fn.file, n?.line ?? fn.line))}">Abrir en VS Code</a>
+      <button class="btn" id="askFn">Preguntar a Claude</button>
+    </div>
+    ${trace ? `<p class="sub" style="word-break:normal">${trace.trace} funciones hasta profundidad ${trace.depth}${trace.truncated ? " (recortado)" : ""}.</p>` : ""}
+    ${n ? `<h3>Paso seleccionado · línea ${n.line ?? "?"}</h3><div class="doc">${esc(n.label)}</div>${(n.calls ?? []).length ? `<div class="links" style="margin-top:6px">${n.calls.map((c) => `<button data-fn="${esc(c)}">↗ Ir a ${esc(shortFn(G.fns[c]))}</button>`).join("")}</div>` : ""}` : ""}
+    <h3>Llama a (${fn.calls.length})</h3>
+    <div class="links">${fn.calls.map((c) => fnLink(c, true)).join("") || `<span class="sub">ninguna función del proyecto</span>`}</div>
+    ${fn.apiCalls?.length ? `<div class="pills" style="margin-top:6px">${[...new Set(fn.apiCalls)].map((h) => `<span class="pill">↗ ${esc(h)}</span>`).join("")}</div>` : ""}
+    <h3>La llaman (${fn.calledBy.length})</h3>
+    <div class="links">${fn.calledBy.map((c) => fnLink(c, true)).join("") || `<span class="sub">nadie dentro del proyecto${fn.route?.method === "CLI" ? " (se ejecuta desde la terminal)" : fn.kind === "route" ? " (la llama HTTP)" : ""}</span>`}</div>
+    ${commentsHtml(id, n)}
+    <h3>Código</h3>
+    ${codeHtml(fn, n?.line)}
+    ${fn.doc ? `<h3>Documentación</h3><div class="doc">${esc(fn.doc)}</div>` : ""}`;
+  $("#traceBtn")?.addEventListener("click", () => go("trace", id));
+  $("#askFn").onclick = () => copy(
+    `Revisa la lógica de ${r ? `${r.method} ${r.fullPath}` : fn.name} en ${fn.file}:${fn.line}.` +
+    (n ? ` En concreto el paso de la línea ${n.line}: "${n.label}".` : "") +
+    ` Según el mapa llama a ${fn.calls.map((c) => G.fns[c].name).join(", ") || "nada interno"} y la llaman ${fn.calledBy.map((c) => G.fns[c].name).join(", ") || "nadie"}.` +
+    (fn.warnings.length ? ` Avisos: ${fn.warnings.map((w) => w.msg).join(" ")}` : ""),
+    "Pregunta copiada: pégala en Claude");
+  wirePanel(id, n);
+  const hl = document.querySelector("pre.code .hl");
+  if (hl) hl.scrollIntoView({ block: "center" });
+}
+
+function selectFlowNode(fnId, node) {
+  cy?.$(".sel").removeClass("sel");
+  const nid = Object.entries(current.meta).find(([, m]) => m === node)?.[0];
+  if (nid) cy?.getElementById(nid).addClass("sel");
+  selectedFlowNode = node;
+  panelFn(fnId);
+}
+
+function routeHtml(r) {
+  if (r.method === "CLI") return `<h3>Cómo se ejecuta</h3><div class="pills"><span class="pill">${esc(r.fullPath)}</span></div>`;
+  return r.mounts.map((m) => `
+    <h3>Cadena de la petición</h3>
+    <div class="pills">
+      ${m.middlewares.map((x) => `<span class="pill">${esc(x)}</span><span class="arrow">→</span>`).join("")}
+      <span class="pill" style="background:var(--accent-soft);color:var(--accent)">handler</span>
+    </div>
+    <div class="sub" style="margin-top:4px">servidor: ${esc(m.server)}</div>`).join("");
+}
+function warnHtml(w) { return `<div class="warnbox"><b>⚠ ${esc(w.rule)}</b> — ${esc(w.msg)}</div>`; }
+function fnLink(id, withFile) {
+  const fn = G.fns[id];
+  const label = fn.kind === "route" ? `<span class="method m-${fn.route.method}">${fn.route.method}</span> ${esc(fn.route.fullPath)}` : esc(shortFn(fn));
+  const extra = withFile ? G.files[fn.file].name : cut(fn.summary ?? "", 70);
+  return `<button data-fn="${esc(id)}">${fn.change ? "● " : ""}${fn.warnings.length ? "⚠ " : ""}${label} <small>${esc(extra)}</small></button>`;
+}
+function codeHtml(fn, hl) {
+  return `<pre class="code">${fn.code.split("\n").map((l, i) => `<span class="ln${fn.line + i === hl ? " hl" : ""}" data-n="${fn.line + i}">${esc(l) || " "}</span>`).join("")}</pre>`;
+}
+
+/* ───────── comentarios de revisión ───────── */
+let comments = store.get("comments", []);
+function commentsHtml(targetId, node) {
+  const mine = comments.filter((c) => c.target === targetId);
+  return `
+    <h3>Revisión${node ? " de este paso" : ""}</h3>
+    ${mine.map((c) => `<div class="comment">${esc(c.text)}<small>${c.line ? `línea ${c.line} · ` : ""}${new Date(c.at).toLocaleString()} · <a href="#" data-del="${c.at}">quitar</a></small></div>`).join("")}
+    <textarea id="cText" placeholder="${node ? "¿Qué está mal o falta en este paso?" : "Observación para el agente…"}"></textarea>
+    <div class="row"><button class="btn" id="cSave">Añadir a la revisión</button></div>`;
+}
+function wirePanel(targetId, node) {
+  const p = $("#panel");
+  p.querySelectorAll("[data-file]").forEach((b) => (b.onclick = () => go("file", b.dataset.file)));
+  p.querySelectorAll("[data-group]").forEach((b) => (b.onclick = () => go("group", b.dataset.group)));
+  p.querySelectorAll("[data-fn]").forEach((b) => (b.onclick = () => go("fn", b.dataset.fn)));
+  p.querySelectorAll("[data-del]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); comments = comments.filter((c) => String(c.at) !== a.dataset.del); store.set("comments", comments); updateReviewBtn(); render(); }));
+  const save = $("#cSave");
+  if (save) save.onclick = () => {
+    const text = $("#cText").value.trim();
+    if (!text) return;
+    const fn = G.fns[targetId];
+    comments.push({ target: targetId, file: fn?.file ?? targetId, name: fn ? (fn.route ? `${fn.route.method} ${fn.route.fullPath}` : fn.name) : targetId, line: node?.line ?? fn?.line ?? null, step: node?.label ?? null, text, at: Date.now() });
+    store.set("comments", comments); updateReviewBtn();
+    fn ? panelFn(targetId) : panelFile(targetId);
+    toast("Añadido a la revisión");
+  };
+}
+function updateReviewBtn() { $("#reviewBtn").textContent = `Revisión (${comments.length})`; }
+function reviewMarkdown() {
+  return [`# Revisión desde codemap`, ``, `Cambios contra \`${G.meta.base}\`. Corrige cada punto y dime qué hiciste en cada uno.`, ``,
+    ...comments.map((c, i) => `${i + 1}. \`${c.file}${c.line ? ":" + c.line : ""}\` — **${c.name}**${c.step ? ` (paso: "${c.step.replace(/\n/g, " ")}")` : ""}\n   ${c.text}`)].join("\n");
+}
+$("#reviewBtn").onclick = () => {
+  $("#reviewBody").innerHTML = comments.length
+    ? `<h2>Revisión (${comments.length})</h2><p class="sub" style="word-break:normal">Cópiala y pégala en Claude: cada punto lleva archivo, línea y el paso del flujo que marcaste.</p><pre>${esc(reviewMarkdown())}</pre>
+       <div class="row"><button class="btn primary" id="rCopy">Copiar para Claude</button><button class="btn" id="rClear">Vaciar</button><button class="btn" id="rClose">Cerrar</button></div>`
+    : `<h2>Revisión vacía</h2><p>Abre una función, haz clic en un paso de su flujo y escribe lo que está mal o falta.</p><div class="row"><button class="btn" id="rClose">Cerrar</button></div>`;
+  $("#review").showModal();
+  $("#rCopy")?.addEventListener("click", () => copy(reviewMarkdown(), "Revisión copiada"));
+  $("#rClear")?.addEventListener("click", () => { if (confirm("¿Vaciar la revisión?")) { comments = []; store.set("comments", comments); updateReviewBtn(); $("#review").close(); render(); } });
+  $("#rClose").onclick = () => $("#review").close();
+};
+
+function showApi(host) {
+  const a = G.apis[host];
+  $("#panel").innerHTML = `<h2>${esc(host)}</h2><p class="sub">Servicio externo llamado por HTTP.</p><h3>Llamadas (${a.calls.length})</h3>
+    <div class="links">${a.calls.map((c) => `<button data-fn="${esc(c.from)}"><span class="method m-${c.method}">${c.method}</span> ${esc(c.url.replace(/^https?:\/\/[^/]+/, ""))} <small>${esc(shortFn(G.fns[c.from]))}</small></button>`).join("")}</div>`;
+  wirePanel();
+}
+
+/* ───────── barra lateral ───────── */
+let tab = store.get("tab", "mapa");
+function renderNav() {
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  const body = $("#navbody");
+  const curFile = state.view === "file" ? state.id : state.view === "fn" || state.view === "trace" ? G.fns[state.id]?.file : null;
+  const curGroup = state.view === "group" ? state.id : curFile ? G.files[curFile].group : null;
+  let h = "";
+  if (tab === "mapa") {
+    h += `<button class="item ${state.view === "system" ? "current" : ""}" data-go="#/system"><span class="lbl"><b>Sistema</b> <small class="sub">resumido</small></span></button>`;
+    h += `<button class="item ${state.view === "all" ? "current" : ""}" data-go="#/all"><span class="lbl"><b>Todo el código</b> <small class="sub">${G.meta.stats.fns} funciones</small></span></button>`;
+    for (const [layer, title] of LAYERS) {
+      const gs = groupsSorted.filter((g) => g.layer === layer);
+      if (!gs.length) continue;
+      h += `<div class="navgroup">${esc(title)}</div>`;
+      for (const g of gs) {
+        h += `<button class="item ${curGroup === g.id && !curFile ? "current" : ""}" data-go="#/group/${encodeURIComponent(g.id)}">${groupChanges[g.id] ? `<span class="dot"></span>` : ""}<span class="lbl">${esc(g.name)}</span>${groupWarn(g.id) ? `<span class="wn">⚠${groupWarn(g.id)}</span>` : ""}</button>`;
+        if (curGroup === g.id) for (const fid of g.files) {
+          const f = G.files[fid];
+          h += `<button class="item l2 ${curFile === fid ? "current" : ""}" data-go="#/file/${encodeURIComponent(fid)}">${f.change ? `<span class="dot"></span>` : ""}<span class="lbl">${esc(f.name)}</span>${fileWarn[fid] ? `<span class="wn">⚠${fileWarn[fid]}</span>` : ""}</button>`;
+          if (curFile === fid) for (const id of f.fns) {
+            const fn = G.fns[id];
+            h += `<button class="item l3 ${state.id === id ? "current" : ""}" data-go="#/fn/${encodeURIComponent(id)}">${fn.change ? `<span class="dot"></span>` : ""}<span class="lbl">${fn.kind === "route" ? `<span class="method m-${fn.route.method}">${fn.route.method}</span> ${esc(fn.route.path)}` : esc(shortFn(fn))}</span>${fn.warnings.length ? `<span class="wn">⚠</span>` : ""}</button>`;
+          }
+        }
+      }
+    }
+  } else if (tab === "entradas") {
+    const entries = Object.values(G.fns).filter((f) => f.kind === "entry" || (f.kind === "component" && G.http.some((h) => h.from === f.id)));
+    if (entries.length) {
+      h += `<div class="navgroup">Puntos de entrada del cliente</div>`;
+      for (const f of entries) h += `<button class="item" data-go="#/trace/${encodeURIComponent(f.id)}"><span class="lbl">${esc(shortFn(f))} <small class="sub">${esc(G.files[f.file].name)}</small></span></button>`;
+    }
+    const byServer = new Map();
+    for (const id of G.routes) { const r = G.fns[id].route; (byServer.get(r.server ?? "sin montar") ?? byServer.set(r.server ?? "sin montar", []).get(r.server ?? "sin montar")).push(id); }
+    for (const [server, ids] of byServer) {
+      h += `<div class="navgroup">Rutas · ${esc(server.replace(/^services\/api\/src\//, ""))}</div>`;
+      for (const id of ids.sort((a, b) => G.fns[a].route.fullPath.localeCompare(G.fns[b].route.fullPath))) {
+        const fn = G.fns[id];
+        h += `<button class="item ${state.id === id ? "current" : ""}" data-go="#/trace/${encodeURIComponent(id)}" title="${esc(fn.summary ?? "")}"><span class="method m-${fn.route.method}">${fn.route.method}</span><span class="lbl mono">${esc(fn.route.fullPath)}</span>${fn.change ? `<span class="dot"></span>` : ""}${fn.warnings.length ? `<span class="wn">⚠</span>` : ""}</button>`;
+      }
+    }
+  } else if (tab === "planes") {
+    const plans = G.plans ?? [];
+    h += `<div class="navgroup">Diagrama primero · ${plans.length} plan${plans.length === 1 ? "" : "es"}</div>`;
+    if (!plans.length) h += `<div class="empty" style="padding:14px">Sin planes. Pídele a Claude que proponga el flujo antes de implementar algo.</div>`;
+    for (const p of plans) {
+      const c = p.cumplimiento ?? { ok: 0, total: 0 };
+      h += `<button class="item ${state.view === "plan" && state.id === p.id ? "current" : ""}" data-go="#/plan/${encodeURIComponent(p.id)}"><span class="estado e-${esc(p.estado)}">${esc(p.estado)}</span><span class="lbl">${esc(p.titulo)}</span><small class="sub">${c.ok}/${c.total}</small></button>`;
+    }
+  } else if (tab === "cambios") {
+    const files = G.meta.changedFiles ?? [];
+    h += `<div class="navgroup">Contra ${esc(G.meta.base)} · ${files.length} archivos</div>`;
+    if (!files.length) h += `<div class="empty" style="padding:14px">Sin cambios. Genera el mapa con <code>--base &lt;commit&gt;</code> para comparar.</div>`;
+    for (const fid of files) {
+      h += `<button class="item" data-go="#/file/${encodeURIComponent(fid)}"><span class="dot"></span><span class="lbl">${esc(G.files[fid].name)} <small class="sub">${esc(G.files[fid].change)}</small></span></button>`;
+      for (const id of G.files[fid].fns.filter((x) => G.fns[x].change)) h += `<button class="item l2 ${state.id === id ? "current" : ""}" data-go="#/fn/${encodeURIComponent(id)}"><span class="lbl">${esc(G.fns[id].kind === "route" ? G.fns[id].route.method + " " + G.fns[id].route.fullPath : shortFn(G.fns[id]))}</span></button>`;
+    }
+  } else {
+    const byRule = new Map();
+    for (const fn of Object.values(G.fns)) for (const w of fn.warnings) (byRule.get(w.rule) ?? byRule.set(w.rule, []).get(w.rule)).push(fn.id);
+    for (const f of Object.values(G.files)) for (const w of f.warnings) (byRule.get("archivo " + w.rule) ?? byRule.set("archivo " + w.rule, []).get("archivo " + w.rule)).push(f.id);
+    const order = ["async-sin-try", "ruta-sin-montar", "funcion-larga", "sin-descripcion", "archivo sin-descripcion"];
+    for (const rule of [...byRule.keys()].sort((a, b) => order.indexOf(a) - order.indexOf(b))) {
+      const ids = byRule.get(rule);
+      h += `<div class="navgroup">${esc(rule)} · ${ids.length}</div>`;
+      for (const id of ids) {
+        const isFile = !!G.files[id] && !G.fns[id];
+        h += isFile
+          ? `<button class="item" data-go="#/file/${encodeURIComponent(id)}"><span class="lbl">${esc(id)}</span></button>`
+          : `<button class="item ${state.id === id ? "current" : ""}" data-go="#/fn/${encodeURIComponent(id)}"><span class="lbl">${esc(G.fns[id].kind === "route" ? G.fns[id].route.method + " " + G.fns[id].route.fullPath : shortFn(G.fns[id]))} <small class="sub">${esc(G.files[G.fns[id].file].name)}</small></span></button>`;
+      }
+    }
+  }
+  body.innerHTML = h;
+  body.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => (location.hash = b.dataset.go)));
+  body.querySelector(".current")?.scrollIntoView({ block: "nearest" });
+}
+document.querySelectorAll("#tabs button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; store.set("tab", tab); renderNav(); }));
+
+/* ───────── búsqueda ───────── */
+const index = [
+  ...Object.values(G.fns).map((f) => ({ kind: f.kind === "route" ? "ruta" : "función", text: f.kind === "route" ? `${f.route.method} ${f.route.fullPath}` : f.name, sub: f.file, go: "#/fn/" + encodeURIComponent(f.id) })),
+  ...Object.values(G.files).map((f) => ({ kind: "archivo", text: f.name, sub: f.id, go: "#/file/" + encodeURIComponent(f.id) })),
+  ...groupsSorted.map((g) => ({ kind: "grupo", text: g.name, sub: g.desc, go: "#/group/" + encodeURIComponent(g.id) })),
+];
+let hits = [], hitIdx = 0;
+$("#q").addEventListener("input", (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  hits = q ? index.filter((x) => (x.text + " " + x.sub).toLowerCase().includes(q)).sort((a, b) => a.text.toLowerCase().indexOf(q) - b.text.toLowerCase().indexOf(q)).slice(0, 14) : [];
+  hitIdx = 0; drawHits();
+});
+function drawHits() {
+  const r = $("#results");
+  r.classList.toggle("open", hits.length > 0);
+  r.innerHTML = hits.map((h, i) => `<button class="${i === hitIdx ? "active" : ""}" data-i="${i}">${esc(h.text)} <span class="badge">${h.kind}</span><small>${esc(h.sub)}</small></button>`).join("");
+  r.querySelectorAll("button").forEach((b) => (b.onmousedown = () => pick(+b.dataset.i)));
+}
+function pick(i) { if (!hits[i]) return; location.hash = hits[i].go; $("#q").value = ""; hits = []; drawHits(); $("#q").blur(); }
+$("#q").addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown") { hitIdx = Math.min(hits.length - 1, hitIdx + 1); drawHits(); e.preventDefault(); }
+  else if (e.key === "ArrowUp") { hitIdx = Math.max(0, hitIdx - 1); drawHits(); e.preventDefault(); }
+  else if (e.key === "Enter") pick(hitIdx);
+  else if (e.key === "Escape") { hits = []; drawHits(); e.target.blur(); }
+});
+$("#q").addEventListener("blur", () => setTimeout(() => { hits = []; drawHits(); }, 120));
+document.addEventListener("keydown", (e) => { if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") { e.preventDefault(); $("#q").focus(); } });
+
+/* ───────── arranque ───────── */
+$("#onlyChanges").classList.toggle("on", onlyChanges);
+$("#onlyChanges").onclick = () => { onlyChanges = !onlyChanges; store.set("onlyChanges", onlyChanges); $("#onlyChanges").classList.toggle("on", onlyChanges); render(); };
+$("#title").textContent = G.meta.name;
+document.title = "Codemap · " + G.meta.name;
+const s = G.meta.stats;
+$("#stats").innerHTML = `<span class="chip">${s.files} archivos</span><span class="chip">${s.fns} funciones</span><span class="chip">${s.routes} rutas</span>` +
+  (G.meta.changedFiles?.length ? `<span class="chip change">● ${G.meta.changedFiles.length} cambiados vs ${esc(G.meta.base)}</span>` : "") +
+  (s.warnings ? `<span class="chip warn">⚠ ${s.warnings}</span>` : "") +
+  (() => {
+    const pending = (G.plans ?? []).filter((p) => p.estado === "propuesto");
+    return pending.length ? `<a class="chip plan" href="#/plan/${encodeURIComponent(pending[0].id)}">◆ ${pending.length} plan${pending.length > 1 ? "es" : ""} por revisar</a>` : "";
+  })();
+updateReviewBtn();
+const _render = render;
+render = function () { _render(); renderNav(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => render());
+window.addEventListener("resize", () => cy?.resize());
+if (!location.hash && G.meta.focus) history.replaceState(null, "", "#/file/" + encodeURIComponent(G.meta.focus));
+state = parseHash();
+// Las tarjetas se miden con sus fuentes: esperar a que carguen (con tope, por si no hay red)
+Promise.race([
+  Promise.all([MONO(12), MONO(10.5, 700), MONO(11.5), SANS(13)].map((f) => document.fonts?.load(f))),
+  new Promise((r) => setTimeout(r, 2500)),
+]).finally(() => render());
+
+/* Recarga sola cuando el hook regenera el mapa (solo servido por serve.mjs). Si hay un
+   comentario a medio escribir no se recarga: se avisa y se espera a que la persona lo pida. */
+if (location.protocol.startsWith("http")) {
+  let known = null;
+  setInterval(async () => {
+    try {
+      const { mtime } = await (await fetch("version?f=" + encodeURIComponent(location.pathname.replace(/^\/+/, "") || "codemap.html"), { cache: "no-store" })).json();
+      if (known === null) { known = mtime; return; }
+      if (mtime === known) return;
+      known = mtime;
+      if ($("#cText")?.value.trim()) {
+        const t = $("#toast");
+        t.textContent = "El mapa se regeneró · clic aquí para recargar";
+        t.style.pointerEvents = "auto"; t.style.cursor = "pointer";
+        t.classList.add("show");
+        t.onclick = () => location.reload();
+      } else {
+        location.reload();
+      }
+    } catch {}
+  }, 2500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+name: Feedback
+description: Lo probaste (en el demo o en tu proyecto) y nos cuentas qué tal
+title: "[feedback] "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por probarlo. Con unas líneas basta; nada es obligatorio salvo la primera pregunta.
+  - type: dropdown
+    id: donde
+    attributes:
+      label: ¿Dónde lo probaste?
+      options:
+        - Solo el demo
+        - En un proyecto mío (TypeScript / JavaScript)
+        - En un proyecto mío (Python)
+        - En un proyecto mío (mixto)
+    validations:
+      required: true
+  - type: textarea
+    id: revisar
+    attributes:
+      label: ¿Te ayudó a entender o revisar el código más rápido?
+      description: ¿Qué vista usaste más? ¿Dónde te perdiste?
+  - type: textarea
+    id: mapa
+    attributes:
+      label: ¿El mapa de tu proyecto tenía sentido sin configurar nada?
+      description: Grupos mal hechos, rutas que no detectó, llamadas que faltan…
+  - type: textarea
+    id: plan
+    attributes:
+      label: ¿Usarías "diagrama primero"?
+      description: ¿Es demasiada fricción? ¿Qué cambiarías del formato del plan o de la revisión?
+  - type: input
+    id: stack
+    attributes:
+      label: ¿Qué lenguaje o framework necesitarías que soporte?
+      placeholder: "p. ej. Next.js, NestJS, Django, Go…"
+  - type: textarea
+    id: otro
+    attributes:
+      label: Cualquier otra cosa
