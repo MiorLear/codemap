@@ -2,6 +2,14 @@
   "name": "codemap",
   "version": "0.1.0",
   "description": "Mapa navegable del código (sistema → archivo → función → flujo) para revisar lo que escribe un agente de IA, con planes \"diagrama primero\" verificados contra el código real.",
+  "license": "MIT",
+  "author": "Miguel Ledezma",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MiorLear/codemap.git"
+  },
+  "homepage": "https://github.com/MiorLear/codemap#readme",
+  "bugs": "https://github.com/MiorLear/codemap/issues",
   "type": "module",
   "bin": {
     "codemap": "bin/codemap.mjs"

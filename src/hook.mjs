@@ -17,7 +17,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { spawn, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { loadConfig, paths, isSource } from "./project.mjs";
+import { loadConfig, paths, isSource, listFiles } from "./project.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEBOUNCE_MS = 1500;
@@ -81,9 +81,6 @@ function fingerprint(root, cfg) {
     }
   };
   const h = crypto.createHash("sha1");
-  h.update(git(["rev-parse", "HEAD"]));
-  h.update(git(["status", "--porcelain", "--", ...cfg.include]));
-  h.update(git(["diff", "HEAD", "--", ...cfg.include]));
   const mtime = (abs) => {
     try {
       return String(fs.statSync(abs).mtimeMs);
@@ -91,6 +88,17 @@ function fingerprint(root, cfg) {
       return "-";
     }
   };
+  const isRepo = git(["rev-parse", "--is-inside-work-tree"]).trim() === "true";
+  if (isRepo) {
+    h.update(git(["rev-parse", "HEAD"]));
+    h.update(git(["status", "--porcelain", "--", ...cfg.include]));
+    h.update(git(["diff", "HEAD", "--", ...cfg.include]));
+  } else {
+    // Sin git no hay diff: la huella son las fechas de modificacion del codigo incluido
+    for (const f of listFiles(root).filter((x) => cfg.include.some((p) => x.startsWith(p)) && isSource(x, cfg))) {
+      h.update(f + mtime(path.join(root, f)));
+    }
+  }
   // Archivos nuevos (sin seguimiento): el diff no los ve
   for (const f of git(["ls-files", "-o", "--exclude-standard", "--", ...cfg.include]).split("\n").filter(Boolean)) {
     h.update(f + mtime(path.join(root, f)));

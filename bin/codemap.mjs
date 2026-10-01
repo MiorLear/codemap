@@ -117,7 +117,7 @@ function installClaude(root) {
   const command = `node "${SELF.split(path.sep).join("/")}" hook`;
   if (/[\\/]_npx[\\/]/.test(SELF)) {
     console.warn("Aviso: estás usando codemap desde la caché de npx; el hook apuntaría a una ruta temporal.");
-    console.warn("Instálalo antes: npm install -g github:<usuario>/codemap   (o como devDependency del proyecto)\n");
+    console.warn("Instálalo antes: npm install -g github:MiorLear/codemap   (o como devDependency del proyecto)\n");
   }
   fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
   const settings = fs.existsSync(settingsFile) ? JSON.parse(fs.readFileSync(settingsFile, "utf8")) : {};

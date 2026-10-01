@@ -135,6 +135,39 @@ await test("serve: guarda la revisión de un plan y rechaza estados inventados",
   }
 });
 
+await test("hook: regenera al editar y no repite si nada cambió (proyecto sin git)", async () => {
+  const state = path.join(demo, ".codemap", "out", ".hook-state.json");
+  const hook = (payload = {}) => spawnSync(process.execPath, [CLI, "hook"], { cwd: demo, input: JSON.stringify(payload), encoding: "utf8", env: { ...process.env, CLAUDE_PROJECT_DIR: demo } });
+  const waitBuilt = async (previous) => {
+    for (let i = 0; i < 40; i++) {
+      await new Promise((r) => setTimeout(r, 250));
+      const s = JSON.parse(fs.readFileSync(state, "utf8"));
+      if (s.builtAt && s.builtAt !== previous && s.built === s.pendingPrint) return s.builtAt;
+    }
+    throw new Error("el hook no regeneró a tiempo");
+  };
+  fs.rmSync(state, { force: true });
+  hook();
+  const first = await waitBuilt(null);
+
+  // Editar un archivo del mapa: tiene que regenerar
+  const file = path.join(demo, "src", "db.ts");
+  const later = new Date(Date.now() + 5000);
+  fs.utimesSync(file, later, later);
+  hook({ tool_name: "Edit", tool_input: { file_path: file } });
+  const second = await waitBuilt(first);
+  assert.notEqual(second, first);
+
+  // Sin cambios: no se apunta ninguna regeneración nueva
+  const before = JSON.parse(fs.readFileSync(state, "utf8")).pending;
+  hook();
+  assert.equal(JSON.parse(fs.readFileSync(state, "utf8")).pending, before);
+
+  // Un archivo que no es del mapa no dispara nada
+  hook({ tool_name: "Edit", tool_input: { file_path: path.join(demo, "package.json") } });
+  assert.equal(JSON.parse(fs.readFileSync(state, "utf8")).pending, before);
+});
+
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(failed ? `\n${failed} prueba(s) fallaron` : "\nTodo bien.");
 process.exit(failed ? 1 : 0);

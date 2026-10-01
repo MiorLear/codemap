@@ -47,7 +47,7 @@ para el agente.
 ## Probarlo en 1 minuto (sin tocar tu código)
 
 ```bash
-git clone <url-de-este-repo> codemap && cd codemap
+git clone https://github.com/MiorLear/codemap.git && cd codemap
 npm install
 npm run demo        # mapa de examples/demo en http://localhost:4321
 ```
@@ -62,7 +62,7 @@ Requisitos: Node 18+, git, y Python 3.9+ si tu proyecto tiene Python (solo usa l
 estándar; no hace falta el entorno de tu proyecto).
 
 ```bash
-npm install -g <url-de-este-repo>    # instala el comando `codemap`
+npm install -g github:MiorLear/codemap    # instala el comando `codemap`
 cd tu-proyecto
 codemap build                        # detecta el proyecto y genera .codemap/out/codemap.html
 codemap serve --open                 # http://localhost:4321, se recarga solo
@@ -248,4 +248,4 @@ examples/demo/       proyecto de ejemplo y plan de muestra
 
 ## Licencia
 
-Pendiente de definir.
+[MIT](LICENSE) © 2026 Miguel Ledezma
